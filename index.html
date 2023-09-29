@@ -1,0 +1,1446 @@
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+	  
+		<title>Bouncing Clock</title>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+		<style>
+			body {
+				margin: 0;
+				box-sizing: border-box;
+				overflow: hidden;
+				font-size:40px;
+				cursor:none;
+				background-color: #000;
+			}
+
+			#black {
+				height: 100vh;
+				width: 100vw;
+				z-index: 500;
+			}
+			
+			#dvdContainer{
+
+				display: table;
+			}
+			
+			#blackhole {
+				position: fixed;
+				background-color:#000;
+				z-index: 500;
+				//font-family: Arial, Helvetica, sans-serif;
+				
+				margin:0px;
+				padding:0px;
+				
+				display: table-row;
+				height:1px;
+				width:1px;
+				
+				
+				white-space: nowrap;
+				background-repeat: no-repeat;
+				background-size: 75px;
+				background-position: center;
+				font-size: 60px;
+				
+				
+				text-align: center;
+			}
+
+			#dvd {
+				position: fixed;
+				color:#fff;
+				z-index: 500;
+				//font-family: Arial, Helvetica, sans-serif;
+				
+				margin:0px;
+				padding:0px;
+				
+				display: table-row;
+				height:5px;
+				
+				
+				white-space: nowrap;
+				background-repeat: no-repeat;
+				background-size: 75px;
+				background-position: center;
+				font-size: 60px;
+				
+				
+				text-align: center;
+				animation: zoomy 2s linear infinite alternate, wiggle .2s cubic-bezier(.6, .8, .4, .2) infinite
+			}
+			
+			#day {
+				position: absolute;
+				color: #555;
+				z-index: 2;
+				font-family: Arial, Helvetica, sans-serif;
+				font-weight: 900;
+				margin: 0px;
+				padding: 0px;
+				opacity: 0;
+				animation: backgroundColorPalette 5s linear;
+			}
+			
+			/* The snackbar - position it at the bottom and in the middle of the screen */
+			#snackbar {
+			  visibility: hidden; /* Hidden by default. Visible on click */
+			  background-color: #333; /* Black background color */
+			  color: #fff; /* White text color */
+			  text-align: center; /* Centered text */
+			  border-radius: 2px; /* Rounded borders */
+			  padding: 16px; /* Padding */
+			  position: fixed; /* Sit on top of the screen */
+			  z-index: 1; /* Add a z-index if needed */
+			  bottom: 30px; /* 30px from the bottom */
+			  left: 50%;
+			  transform: translateX(-50%);
+			}
+
+			/* Show the snackbar when clicking on a button (class added with JavaScript) */
+			#snackbar.show {
+			  visibility: visible; /* Show the snackbar */
+			  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+			  However, delay the fade out process for 2.5 seconds */
+			  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+			  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+			}
+
+			/* Animations to fade the snackbar in and out */
+			@-webkit-keyframes fadein {
+			  from {bottom: 0; opacity: 0;}
+			  to {bottom: 30px; opacity: 1;}
+			}
+
+			@keyframes fadein {
+			  from {bottom: 0; opacity: 0;}
+			  to {bottom: 30px; opacity: 1;}
+			}
+
+			@-webkit-keyframes fadeout {
+			  from {bottom: 30px; opacity: 1;}
+			  to {bottom: 0; opacity: 0;}
+			}
+
+			@keyframes fadeout {
+			  from {bottom: 30px; opacity: 1;}
+			  to {bottom: 0; opacity: 0;}
+			}
+
+			@keyframes backgroundColorPalette {
+				0% {
+					opacity: 0;
+				}
+				25% {
+					opacity: 1;
+				}
+				50% {
+					opacity: 0;
+				}
+				100% {
+					opacity: 0;
+				}
+			}
+			
+			@keyframes zoom {
+				0% { 
+					font-size: 0px;
+				}
+				50% {
+					font-size: 75px;
+				}
+				100% { 
+					font-size: 0px;
+				} 
+			}
+			
+			@keyframes bigzoom { 
+				0% { 
+					font-size: 1px;
+				} 
+				100% { 
+					font-size: 225px;
+				} 
+			}
+			
+			@keyframes zoomy { 
+				0% { 
+					font-size: 40px;
+				} 
+				50% { 
+					font-size: 75px;
+				}
+				100% { 
+					font-size: 40px;
+				} 
+			}
+			
+			@keyframes rotation { 
+				0% { 
+					transform: rotate(330deg);
+				} 
+				50% { 
+					transform: rotate(390deg);
+				}
+				100% { 
+					transform: rotate(330deg);
+				} 
+			}
+			
+			@keyframes annoyingrotation { 
+				0% { 
+					transform: rotate(720deg);
+				} 
+				50% { 
+					transform: rotate(0deg);
+				}
+				100% { 
+					transform: rotate(720deg);
+				} 
+			}
+			
+			@keyframes inverseannoyingrotation { 
+				0% { 
+					transform: rotate(0deg);
+				} 
+				50% { 
+					transform: rotate(720deg);
+				}
+				100% { 
+					transform: rotate(0deg);
+				} 
+			}
+			
+			@keyframes wiggle { 
+				0% { 
+					transform: rotate(350deg);
+				} 
+				50% { 
+					transform: rotate(370deg);
+				}
+				100% { 
+					transform: rotate(350deg);
+				} 
+			}
+			
+			@keyframes rot1 {
+				0%{
+					transform: rotate(var(--from-rot));
+				}
+				50%{
+					transform: rotate(var(--to-rot));
+				}
+				100%{
+					transform: rotate(var(--from-rot));
+				}
+			}
+			
+			@keyframes rot1p {
+				0%{
+					transform: rotate(var(--to-rot));
+				}
+				50%{
+					transform: rotate(var(--from-rot));
+				}
+				100%{
+					transform: rotate(var(--to-rot));
+				}
+			}
+			
+			
+		</style>
+	</head>
+
+	<body translate="no" id="bod">
+		<div id="black">
+			<h2 id="dvd">TIMESTAMP</h1>
+		</div>
+		<span id="day">DATE</span>
+		<div id="snackbar">Some text some message..</div>
+		<div id="blackhole">&nbsp;</div>
+		
+		<!-- Positioning Logic -->
+		<script>
+			// Elements positions, directions and speeds
+			const animationCount = 7,
+			      maxRandomChange = 5000,
+			      minRandomChange = 100,
+				  debug = true,
+				  presets = ["DVD logo...?", "Drunken Whip", "Zoomies", "Speen", "Corner shot!", "Random", "DVD logo but with acceleration", "Moving Black Hole"];
+				  
+			let x = 0,
+				y = 0,
+				dirX = 1,
+				dirY = 1,
+				minspeed = .2,
+				speedfactor = 50.1,
+				speedX = 1.1,
+				speedY = 1.1,
+				speedBoost=10.0,
+				speedBoostFastest = 10.0,
+				speedBoostSlowest = 100.0,
+				screenHeight = 0,
+				screenWidth = 0,
+				corner = 0,
+				
+				bh_x = 10000,
+				bh_y = 10000,
+				bh_dirX = -1,
+				bh_dirY = -1,
+				bh_speedX = 1.1,
+				bh_speedY = 1.1,
+				bh_speedfactor = 1.1,
+				bh_speedBoostFastest = 1.0,
+				bh_speedBoostSlowest = 1.0,
+				bh_speedBoost = 1.0,
+				grav = 50,
+				dvd_interacts_with_bh = false,
+				invert_attraction = false,
+				
+				firstFrameOfHour = true,
+				firstRun = true,
+				funcGroup = 1,
+				isMouseHover = false,
+				min = 0,
+				sec = 0,
+				lastSecond = 0,
+				
+				doReposition=true,
+				fadetimersynch = -1,
+				repositionInterval = 5,
+				nextRepositionSecond = 0,
+				
+				movementType = "DVD",
+				oneInThisChanceOfChanging = 100,
+				doAnimationOnRePosition = false,
+				
+				aimForCorners = false,
+				edgesGoFastInstead = false,
+				speedUpFasterFromEdges = false,
+				gravityWell = false,
+				
+				gate4 = true,
+				bg6synch=0,
+				a2=0,
+			    b2=0,
+				c2=0,
+				d2=0;
+
+			// Elements to be manipulated
+			let dvd = document.getElementById("dvd");
+			let day = document.getElementById("day");
+			let bg = document.getElementById("black");
+			let bh = document.getElementById("blackhole");
+			
+			function updateGlobalVariables(){
+				min = parseInt(new Date().getMinutes());
+				sec = parseInt(new Date().getSeconds());
+				
+				screenHeight = document.body.clientHeight;
+				screenWidth = document.body.clientWidth;
+				doAnimationOnRePosition = false;
+				
+				// once we have more animations, we can randomize what they get every hour!
+				if(sec==0 && min==0){
+					if(firstFrameOfHour){
+						firstRun = true;
+						changeFuncGroup(0);
+						firstFrameOfHour = false; // for the love of all things that are holy just run once
+					}
+				} else {
+					firstFrameOfHour = true;
+				}
+				
+				// Every 5 minutes, re-assess some stuff to change
+				if((min%5==0 && sec==0)||firstRun){
+					oneInThisChanceOfChanging = Math.floor(Math.random()*maxRandomChange-minRandomChange)+minRandomChange;
+					getFonts(dvd);
+					getFonts(day);
+				}
+				
+				if(debug){
+					//oneInThisChanceOfChanging=100000000;
+				}
+			}
+			
+			// Update the speeds used to calculate the time element's position
+			function updateSpeedFactors(option){
+				if(option=="dvd")
+				{
+					updateColor();
+					//updateTextRandomness(); // TODO upside down, mirrored, reversed, etc
+					setNewSpeedFactor();
+					speedBoost = randomBetween(speedBoostFastest, speedBoostSlowest);
+					if(aimForCorners){
+						corner = 0;
+						aimNearCorner();
+					} else {
+						speedX = getSpeedFactorXY(speedfactor);
+						speedY = getSpeedFactorXY(speedfactor);
+					}
+				} else {
+					bh_speedBoost = randomBetween(bh_speedBoostFastest, bh_speedBoostSlowest);
+					//if(aimForCorners){
+					//	corner = 0;
+					//	aimNearCorner();
+					//} else {
+						bh_speedX = getSpeedFactorXY(bh_speedfactor);
+						bh_speedY = getSpeedFactorXY(bh_speedfactor);
+					//}
+				}
+			}
+			
+			// Update the position and display text
+			function updateDVD(){
+				dvd.innerText = new Date().toLocaleTimeString(); // 11:18:48 AM
+				dvd.innerText = new Date().toLocaleTimeString(); // 11:18:48 AM
+				
+				pickCSSAnimation("dvd", funcGroup);
+				
+				if(min==59 || movementType == "CENTER"){
+					x = (screenWidth-dvd.clientWidth)/2;
+					y = (screenHeight/2-dvd.clientHeight*6);
+					if(min==59) updateColor();
+					
+					dvd.style.left = x + "px";
+					dvd.style.top = y + "px";
+				} else if(movementType == "DVD"){
+					dvd.style.display = "table-row";
+					
+					// Don't let us clip off the X axis edges of the screen
+					if (x + dvd.clientWidth >= screenWidth || x < 0) {
+						dirX *= -1;
+						if(Math.round(0.75*Math.random(),0)==1) dirY *= -1;
+						
+						if(x<0) x=0;
+						else x=screenWidth-1-dvd.clientWidth;
+						
+						updateSpeedFactors("dvd");
+					}
+					
+					// Don't let us clip off the Y axis edges of the screen
+					if (y + (11*dvd.clientHeight) >= screenHeight || y < 0) {
+						dirY *= -1;
+						if(Math.round(0.75*Math.random(),0)==1) dirX *= -1;
+						
+						if(y<0) y=0;
+						else y=screenHeight-1-(11*dvd.clientHeight);
+						
+						updateSpeedFactors("dvd");
+					}
+
+					// Jiggle on mouse hover
+					if(isMouseHover){
+						dirY *= -1;
+						dirX *= -1;
+						updateSpeedFactors("dvd");
+					}
+					
+					// Random chance to swap directinos for no reason
+					// TODO, I don't like this on every single one
+					//if(Math.floor(Math.random()*oneInThisChanceOfChanging)==0) dirY *= -1;
+					//if(Math.floor(Math.random()*oneInThisChanceOfChanging)==0) dirX *= -1;
+					
+					// Move the element around
+					let prevX = x, prevY = y;
+					x += dirX * speedX;
+					y += dirY * speedY;
+					
+					// If the DVD logo interacts with the invisible black hole object
+					if(dvd_interacts_with_bh){
+						// Find the distance between the DVD logo and the black hole
+						let bh_disX = (x - bh_x);
+						let bh_disY = (y - bh_y);
+						let distance = Math.sqrt(Math.pow(bh_disX, 2) + Math.pow(bh_disY, 2));
+						let angle = Math.atan2(bh_disY, bh_disX);
+						
+						if(distance !== 0){
+							let attractionAcceleration = 9000 / Math.pow(distance,2); //add mass calculation later when mass is variable
+							
+							
+							let xattraction = -1 * attractionAcceleration * Math.cos(angle)
+							let yattraction = -1 * attractionAcceleration * Math.sin(angle)
+							
+							dvd.innerText = xattraction
+								
+							x += xattraction;
+							y += yattraction;
+						}
+					}
+					
+					// imagine a gravity well in the center of the screen that accelerates movement
+					if(speedUpFasterFromEdges){
+						// get distances from center
+						let disx = x, disy = y;
+						if(screenWidth - x - dvd.clientWidth < disx) disx = screenWidth - x - dvd.clientWidth;
+						if(screenHeight - y - (11*dvd.clientHeight) < disy) disy = screenHeight - y - (11*dvd.clientHeight);
+						
+						if(edgesGoFastInstead){
+							disx = screenWidth/2-disx;
+							disy = screenHeight/2-disy;
+						}
+						
+						if(gravityWell){
+							// If we have a trajectory, keep our aim there
+							if(aimForCorners == true){ 
+								
+								aimNearCorner();
+							}
+							
+							// the greater the distance, the greater the speed boost. This is per frame, so small numbers here.
+							x+=disx*dirX/((60-min)+1);
+							y+=disy*dirY/((60-min)+1);
+						} else {
+							// we already moved DX/DY pixels. How many more do we want to move, based on distance? 
+							let deltaX = dirX*Math.abs(x-prevX), deltaY = dirY*Math.abs(y-prevY);
+							
+							// give it a boost
+							if(edgesGoFastInstead){
+								x+=deltaX*Math.max(disx,disy)/speedBoost;
+								y+=deltaY*Math.max(disx,disy)/speedBoost;
+							} else {
+								x+=deltaX*Math.min(disx,disy)/speedBoost;
+								y+=deltaY*Math.min(disx,disy)/speedBoost;
+							}
+						}
+					}
+					
+					dvd.style.left = x + "px";
+					dvd.style.top = y + "px";
+				} else if (movementType == "RANDOM"){
+					try {
+						dvd.style.display = "inline-block";
+						// set in CSS block to propagate down
+						if(sec == nextRepositionSecond || firstRun){
+							if(doReposition)
+							{
+								randomlyRepositionElement(dvd);
+								
+								doReposition = false;
+								
+								repositionInterval = Math.floor(randomBetween(10, (60-min)/12.0))
+								
+								if(repositionInterval<=0) repositionInterval=2;
+								
+								if(doAnimationOnRePosition){
+									dvd.style.animation = 'none'; 
+									dvd.offsetHeight; /* trigger reflow */
+									dvd.style.animation = 'zoom ' + repositionInterval + 's cubic-bezier(' + Math.random() + ',' + randomBetween(-1.5,1.5) + ',' + Math.random() + ',' + randomBetween(-1.5,1.5) + ')';
+								}
+								
+								nextRepositionSecond = (sec + repositionInterval)%60	
+								if(nextRepositionSecond<=0) nextRepositionSecond=2;								
+								
+								updateColor();
+							}
+						} else {
+							doReposition = true;
+						}
+					} catch {}
+				}
+			}
+			
+			// Update the position and display text
+			function updateBlackHole(movement_type){
+				if(min==59 || movement_type == "CENTER"){
+					bh_x = screenWidth/2;
+					bh_y = screenHeight/2;
+					
+					bh.style.left = x + "px";
+					bh.style.top = y + "px";
+				} else if(movement_type == "DVD"){
+					bh.style.display = "table-row";
+					
+					// Don't let us clip off the X axis edges of the screen
+					if (bh_x + bh.clientWidth >= screenWidth || bh_x < 0) {
+						bh_dirX *= -1;
+						if(Math.round(0.75*Math.random(),0)==1) bh_dirY *= -1;
+						
+						if(bh_x<0) bh_x=0;
+						else bh_x=screenWidth-1;
+						
+						updateSpeedFactors("bh");
+					}
+					
+					// Don't let us clip off the Y axis edges of the screen
+					if (bh_y + (bh.clientHeight) >= screenHeight || bh_y < 0) {
+						bh_dirY *= -1;
+						if(Math.round(0.75*Math.random(),0)==1) bh_dirX *= -1;
+						
+						if(bh_y<0) bh_y=0;
+						else bh_y=screenHeight-1;
+						
+						updateSpeedFactors("bh");
+					}
+
+					// Jiggle on mouse hover
+					if(isMouseHover){
+						bh_dirY *= -1;
+						bh_dirX *= -1;
+						updateSpeedFactors("bh");
+					}
+					
+					// Random chance to swap directinos for no reason
+					// TODO, I don't like this on every single one
+					//if(Math.floor(Math.random()*oneInThisChanceOfChanging)==0) dirY *= -1;
+					//if(Math.floor(Math.random()*oneInThisChanceOfChanging)==0) dirX *= -1;
+					
+					// Move the element around
+					let prevX = bh_x, prevY = bh_y;
+					bh_x += bh_dirX * bh_speedX;
+					bh_y += bh_dirY * bh_speedY;
+					
+					// imagine a gravity well in the center of the screen that accelerates movement 
+					
+					if(speedUpFasterFromEdges){
+						// get distances from center
+						let disx = bh_x, disy = bh_y;
+						if(screenWidth - bh_x < disx) disx = screenWidth - bh_x;
+						if(screenHeight - bh_y < disy) disy = screenHeight - bh_y;
+						
+						if(edgesGoFastInstead){
+							disx = screenWidth/2-disx;
+							disy = screenHeight/2-disy;
+						}
+						
+						if(gravityWell){
+							// If we have a trajectory, keep our aim there
+							if(aimForCorners == true)
+							{ 
+								aimNearCorner();
+							}
+							
+							// the greater the distance, the greater the speed boost. This is per frame, so small numbers here.
+							bh_x+=disx*bh_dirX/((60-min)+1);
+							bh_y+=disy*bh_dirY/((60-min)+1);
+						} else {
+							// we already moved DX/DY pixels. How many more do we want to move, based on distance? 
+							let deltaX = bh_dirX*Math.abs(bh_x-prevX), deltaY = bh_dirY*Math.abs(bh_y-prevY);
+							
+							// give it a boost
+							if(edgesGoFastInstead){
+								bh_x+=deltaX*Math.max(disx,disy)/bh_speedBoost;
+								bh_y+=deltaY*Math.max(disx,disy)/bh_speedBoost;
+							} else {
+								bh_x+=deltaX*Math.min(disx,disy)/bh_speedBoost;
+								bh_y+=deltaY*Math.min(disx,disy)/bh_speedBoost;
+							}
+						}
+					}
+					
+					bh.style.left = bh_x + "px";
+					bh.style.top = bh_y + "px";
+				} else if (movement_type == "RANDOM"){
+					try {
+						bh.style.display = "inline-block";
+						// set in CSS block to propagate down
+						if(sec == nextRepositionSecond || firstRun){
+							if(doReposition)
+							{
+								randomlyRepositionElement(bh);
+								
+								doReposition = false;
+								
+								repositionInterval = Math.floor(randomBetween(10, (60-min)/12.0))
+								
+								if(repositionInterval<=0) repositionInterval=2;
+								
+								nextRepositionSecond = (sec + repositionInterval)%60	
+								if(nextRepositionSecond<=0) nextRepositionSecond=2;								
+								
+								updateColor();
+							}
+						} else {
+							doReposition = true;
+						}
+					} catch {}
+				}
+			}
+			
+		</script>
+		
+		<!-- Helper functions that probably won't change so I can collapse the script tag -->
+		<script>
+			
+			function aimNearCorner(){
+				// Really, there are 8 corners here. [0,5], [5,0], [0,h-5], [5,h], [w,5], [w-5,0], [w,h-5], [w-5,h]
+				let offset = 5;
+				let cornerX = screenWidth-(dvd.clientWidth);
+				let cornerY = screenHeight-(dvd.clientHeight*6);
+				
+				if(corner == 0) 
+					corner = Math.round(randomBetween(1,8),0);
+				
+				switch(corner){
+					case 1:
+						cornerX = 0;
+						cornerY = offset;
+						break;
+					case 2:
+						cornerX = offset;
+						cornerY = 0;
+						break;
+					case 3:
+						cornerX = 0;
+						cornerY -= offset;
+						break;
+					case 4:
+						cornerX = offset;
+						cornerY -= 0;
+						break;
+					case 5:
+						cornerX -= 0;
+						cornerY = offset;
+						break;
+					case 6:
+						cornerX -= offset;
+						cornerY = 0;
+						break;
+					case 7:
+						cornerX -= 0;
+						cornerY -= offset;
+						break;
+					case 8:
+						cornerX -= offset;
+						cornerY -= 0;
+						break;
+				}
+				
+				// Get from where we are now to the corner exactly.
+				let getthereinNframes = 100.0;
+				speedX = Math.abs(x-cornerX)/getthereinNframes;
+				speedY = Math.abs(y-cornerY)/getthereinNframes;
+									
+				if(Math.abs(speedX) < 0.25) speedX = getSpeedFactorXY(speedfactor);
+				if(Math.abs(speedY) < 0.25) speedY = getSpeedFactorXY(speedfactor);
+			}
+			
+			function updateDate(){
+				if(fadetimersynch == -1){
+					fadetimersynch = (sec-3)%5;
+				}
+				
+				// Move the timer
+				if(sec != lastSecond || min==59){
+					lastSecond = sec;
+					if(sec%5==fadetimersynch || min==59){
+						randomlyRepositionElement(day);
+						// Only reanimate every 10 seconds though
+						if(sec%10==fadetimersynch){
+							day.style.animation = 'none';
+							day.offsetHeight; /* trigger reflow */
+							day.style.animation = null; 
+						}
+					}
+				}
+				
+				day.innerHTML = new Date().toLocaleDateString('en-us', { weekday:"long", month:"long", day:"numeric"}) //+ "<br /><sub><sub><sub><sub><sub><sub><sub><sub> (" + funcGroup + " / " + oneInThisChanceOfChanging + ")</sub></sub></sub></sub></sub></sub></sub></sub>"
+			}
+			
+			function getFonts(ele){
+				const fontCheck = new Set([
+					// Windows 10
+					'Arial', 'Arial Black', 'Bahnschrift', 'Calibri', 'Cambria', 'Cambria Math', 'Candara', 'Comic Sans MS', 'Consolas', 'Constantia', 'Corbel', 'Courier New', 'Ebrima', 'Franklin Gothic Medium', 'Gabriola', 'Gadugi', 'Georgia', 'HoloLens MDL2 Assets', 'Impact', 'Ink Free', 'Javanese Text', 'Leelawadee UI', 'Lucida Console', 'Lucida Sans Unicode', 'Malgun Gothic', 'Microsoft Himalaya', 'Microsoft JhengHei', 'Microsoft New Tai Lue', 'Microsoft Sans Serif', 'Microsoft Tai Le', 'Microsoft YaHei', 'Microsoft Yi Baiti', 'MingLiU-ExtB', 'Mongolian Baiti', 'MS Gothic', 'MV Boli', 'Myanmar Text', 'Nirmala UI', 'Palatino Linotype', 'Segoe MDL2 Assets', 'Segoe Print', 'Segoe Script', 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Emoji', 'SimSun', 'Sitka', 'Sylfaen', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Yu Gothic',
+					// macOS
+					'American Typewriter', 'Andale Mono', 'Arial', 'Arial Black', 'Arial Narrow', 'Arial Rounded MT Bold', 'Arial Unicode MS', 'Avenir', 'Avenir Next', 'Avenir Next Condensed', 'Baskerville', 'Big Caslon', 'Bodoni 72', 'Bodoni 72 Oldstyle', 'Bodoni 72 Smallcaps', 'Bradley Hand', 'Brush Script MT', 'Chalkboard', 'Chalkboard SE', 'Chalkduster', 'Charter', 'Cochin', 'Comic Sans MS', 'Copperplate', 'Courier', 'Courier New', 'Didot', 'DIN Alternate', 'DIN Condensed', 'Futura', 'Geneva', 'Georgia', 'Gill Sans', 'Helvetica', 'Helvetica Neue', 'Herculanum', 'Hoefler Text', 'Impact', 'Lucida Grande', 'Luminari', 'Marker Felt', 'Menlo', 'Microsoft Sans Serif', 'Monaco', 'Noteworthy', 'Optima', 'Palatino', 'Papyrus', 'Phosphate', 'Rockwell', 'Savoye LET', 'SignPainter', 'Skia', 'Snell Roundhand', 'Tahoma', 'Times', 'Times New Roman', 'Trattatello', 'Trebuchet MS', 'Verdana', 'Zapfino',
+					].sort());
+
+				(async() => {
+					await document.fonts.ready;
+
+					const fontAvailable = new Set();
+
+					for (const font of fontCheck.values()) {
+						if (document.fonts.check(`12px "${font}"`)) {
+							fontAvailable.add(font);
+						}
+					}
+					  
+					ele.style.fontFamily = getRandomItem(fontAvailable);
+
+					//console.log('Font Used: '+ ele.style.fontFamily);
+				})();
+			}
+			
+			function getRandomItem(set) {
+				let items = Array.from(set);
+				return items[Math.floor(Math.random() * items.length)];
+			}
+			
+			// Gets a new HSL style color and returns it in hex form
+			function getNewRandomColorHSL() {
+				let h = Math.floor(Math.random() * 360);
+				let s = Math.floor(Math.random() * 100);
+				let l = 50+Math.floor(Math.random() * 50);
+				
+				// 50-50 chance of just fully saturated color, or of pastel
+				if(Math.floor(Math.random()*2,0)>0){
+					s = 100;
+					l = 50;
+				}
+				
+				// Magic number. If either speed is an integer, return black
+				//if(Math.round(speedX,0)==speedX || Math.round(speedY,0)==speedY) return "#000";
+				
+				return hslToHex(h,s,l);
+			}
+
+			// Converts numeric HSL ([0,360],[0,100],[0,100]) to RGB in hex
+			function hslToHex(h, s, l) {
+				l /= 100;
+				const a = s * Math.min(l, 1 - l) / 100;
+				const f = n => {
+					const k = (n + h / 30) % 12;
+					const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+					return Math.round(255 * color).toString(16).padStart(2, '0');   // convert to Hex and prefix "0" if needed
+				};
+				return `#${f(0)}${f(8)}${f(4)}`;
+			}
+			
+			// Sets the color of the DVD logo time thing
+			function updateColor(){
+				dvd.style.color = getNewRandomColorHSL();
+			}
+			
+			// Returns a new random X/Y speed factor
+			function getSpeedFactorXY(sf){
+				return minspeed+(sf*Math.random());
+			}
+			
+			// Sets the upper bounds of the next speedfactor calculation. Set the upper bound before the X/Y to limit the speed more consistently
+			function setNewSpeedFactor(){
+				const curmin = min+sec/60.0;
+				
+				speedfactor = (Math.pow(10,-5)*Math.pow(curmin,4)) - (0.0009*Math.pow(curmin,3)) + (0.0262*Math.pow(curmin,2)) - (0.1815*curmin) + 1.0482;
+			}
+			
+			// Next frame
+			function animate() {
+				updateGlobalVariables();
+				updateBG();
+				updateDVD();
+				updateDate();
+				updateBlackHole("DVD");
+				firstRun = false; // gate to refresh animations at the top of the hour
+				window.requestAnimationFrame(animate);
+			}
+			
+			function randomBetween(max, min){
+				return Math.random() * (max-min)+min;
+			}
+			
+			// Update background layer animation
+			function updateBG(){
+				pickCSSAnimation("BG", funcGroup);
+			}
+			
+			// ON mouse wheel change, change the min speed
+			function MouseWheelHandler() {
+				// cross-browser wheel delta
+				var e = window.event || e; // old IE support
+				var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+				
+				var nextGroup = funcGroup + delta + animationCount-1;
+				nextGroup = nextGroup%animationCount;
+				nextGroup++;
+				
+				//console.log("D" + delta + " at " + funcGroup + " next is " + nextGroup);
+				changeFuncGroup(nextGroup);
+				
+				return false;
+			}
+			
+			function changeFuncGroup(preset){
+				if(min!=59) {
+					let oldgroup = funcGroup;
+					let newgroup = preset;
+					if(preset==0) {
+						newgroup = Math.floor(Math.random()*animationCount+1);
+						if(newgroup==oldgroup) {
+							changeFuncGroup(0);
+							return;
+						}
+					} 
+					
+					//console.log(newgroup + " " + preset);
+					funcGroup = newgroup;
+					firstRun=true;
+					bg.style.animation = 'none';
+					bg.offsetHeight; /* trigger reflow */
+					dvd.style.animation = 'none';
+					dvd.offsetHeight; /* trigger reflow */
+				}
+				
+				// Get the snackbar DIV
+				var snack = document.getElementById("snackbar");
+
+				// Add the "show" class to DIV
+				snack.className = "show";
+				snack.innerHTML = presets[funcGroup-1];
+
+				// After 3 seconds, remove the show class from DIV
+				setTimeout(function(){ snack.className = snack.className.replace("show", ""); }, 1000);
+				
+			}
+			
+			function randomlyRepositionElement(ele){
+				ele.style.left = "";
+				ele.style.right = "";
+				ele.style.top = "";
+				ele.style.bottom = "";
+				let fadeX = 100*Math.random();
+				let fadeY = 100*Math.random();						
+				if(fadeX > 50) ele.style.right = (100.0 - fadeX) + "%";
+				else ele.style.left = (fadeX) + "%";
+				if(fadeY > 50) ele.style.bottom = (100.0 - fadeY) + "%";
+				else ele.style.top = (fadeY) + "%";
+			}
+			
+			// Add events
+			dvd.addEventListener("mouseleave", function (event) {
+				isMouseHover = false;
+			}, false);
+			dvd.addEventListener("mouseover", function (event) {
+				isMouseHover = true;
+			}, false);
+
+			window.addEventListener("mousewheel", MouseWheelHandler, false);
+			
+		</script>
+		
+		<!-- CSS animations -->
+		<script>
+			// Runs an element through the animation picker function
+			function pickCSSAnimation(whichone, grp){
+				if(min==59){
+					if(sec==0 || firstRun){
+						bg.style.animation = 'none';
+						dvd.style.animation = 'bigzoom 60s ease-in'; 
+						bg.offsetHeight; /* trigger reflow */
+						dvd.offsetHeight; /* trigger reflow */
+					}
+				}
+				else
+				{
+					if(whichone=="dvd"){
+						switch (grp) {
+							case 1:
+								updateDVDAnimationFunction1(dvd);
+								break;
+							case 2:
+								updateDVDAnimationFunction2(dvd);
+								break;
+							case 3:
+								updateDVDAnimationFunction3(dvd);
+								break;
+							case 4:
+								updateDVDAnimationFunction4(dvd);
+								break;
+							case 5:
+								updateDVDAnimationFunction5(dvd);
+								break;
+							case 6:
+								updateDVDAnimationFunction6(dvd);
+								break;
+							case 7:
+								updateDVDAnimationFunction7(dvd);
+								break;
+							
+						}
+						dvd.offsetHeight; /* trigger reflow */
+					} else {
+						switch (grp) {
+							case 1:
+								updateBGAnimationFunction1(bg);
+								break;
+							case 2:
+								updateBGAnimationFunction2(bg);
+								break;
+							case 3:
+								updateBGAnimationFunction3(bg);
+								break;
+							case 4:
+								updateBGAnimationFunction4(bg);
+								break;
+							case 5:
+								updateBGAnimationFunction5(bg);
+								break;
+							case 6:
+								updateBGAnimationFunction6(bg);
+								break;
+							case 7:
+								updateBGAnimationFunction7(bg);
+								break;
+						}
+						bg.offsetHeight; /* trigger reflow */
+					}
+				}
+			}
+
+			// Stays calm for 45 minutes, 
+			// then does a huge rotation every 5 seconds until the last minute
+			function updateDVDAnimationFunction1(ele){
+				movementType = "DVD";
+				
+				aimForCorners = false;
+				edgesGoFastInstead = false;
+				speedUpFasterFromEdges = false;
+				gravityWell = false;
+				
+				// at the top of any minute,
+				if(sec==0 || firstRun){
+					if(min<15){
+						ele.style.animation = 'none';
+					} else if (min<30) {
+						ele.style.animation = 'zoomy 2s linear infinite alternate';
+					} else if (min<45) {
+						ele.style.animation = null;
+					} else if (min<50) {
+						ele.style.animation = 'none';
+					} else if (min<55){
+						ele.style.animation = 'zoomy 2s linear infinite alternate';
+					} else {
+						ele.style.animation = null; 
+					} 
+				}
+			}
+			
+			// Rotates around the screen in different patterns in synch with another element inversing it
+			// Rotation speed increases as we get closer to the top of the hour
+			function updateDVDAnimationFunction2(ele){
+				movementType = "DVD";
+				
+				aimForCorners = false;
+				edgesGoFastInstead = false;
+				speedUpFasterFromEdges = false;
+				gravityWell = false;
+				
+				// at the top of any minute,
+				if(sec==0 || firstRun){
+					if(min<10){
+						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 0) infinite';
+					} else if (min < 20) {
+						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 1) infinite';
+					} else if (min < 30) {
+						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 1) infinite';
+					} else if (min < 40) {
+						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 0) infinite';
+					} else if (min < 50) {
+						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(.25, 2, .75, -1) infinite';
+					} else {
+						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
+					}
+				}
+			}
+			
+			// Rotates around the screen in different patterns in synch with another element inversing it
+			// Rotation speed increases as we get closer to the top of the hour
+			function updateDVDAnimationFunction3(ele){
+				aimForCorners = false;
+				edgesGoFastInstead = false;
+				speedUpFasterFromEdges = false;
+				gravityWell = false;
+				movementType = "RANDOM";
+				doAnimationOnRePosition = true;
+			}
+			
+			// Rotates around the screen in different patterns in synch with another element inversing it
+			// Rotation speed increases as we get closer to the top of the hour
+			function updateDVDAnimationFunction4(ele){
+				aimForCorners = false;
+				edgesGoFastInstead = false;
+				speedUpFasterFromEdges = false;
+				gravityWell = false;
+				
+				if(min%2==0)
+					movementType = "DVD";
+				else
+					movementType = "RANDOM";
+				
+				// at the top of any minute,
+				if(sec%15==0 || firstRun){
+					if(gate4){
+						ele.setAttribute("style", "--from-rot: " + Math.floor(randomBetween(0,720)) + "deg");
+						ele.setAttribute("style", "--to-rot: " + Math.floor(randomBetween(0,720)) + "deg");
+						let seconds = Math.floor(Math.random()*5+5)
+						a2=Math.random();
+						b2=Math.random();
+						c2=Math.random();
+						d2=Math.random();
+						ele.style.animation = 'rot1 ' + seconds + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
+						gate4 = false;
+					}
+				} else {
+					gate4 = true;
+				}
+			}
+			
+			// aim for corners. Add gravity well after 30 minutes
+			function updateDVDAnimationFunction5(ele){
+				movementType = "DVD";
+				aimForCorners = true;
+				
+				ele.style.animation = 'none';
+				// at the top of any minute,
+				if(sec==0 || firstRun){
+					speedUpFasterFromEdges = true;
+					
+					if (min < 12) {
+						speedUpFasterFromEdges = false;
+						edgesGoFastInstead = false;
+						gravityWell = false;
+					} else if (min<24) {
+						edgesGoFastInstead = true;
+						gravityWell = false;
+					} else if (min<36) {
+						edgesGoFastInstead = false;
+						gravityWell = false;
+					} else if (min<48) {
+						edgesGoFastInstead = true;
+						gravityWell = true;
+					} else {
+						edgesGoFastInstead = false;
+						gravityWell = true;
+					}
+				}
+			}
+			
+			// RANDOM
+			function updateDVDAnimationFunction6(ele){
+				movementType = "DVD";
+				
+				// at the top of any minute,
+				if(sec==0 || firstRun){
+					speedUpFasterFromEdges = false;
+					aimForCorners = false;
+					// Pick modifiers
+					switch(Math.floor(randomBetween(0,4))){
+						case 0:
+							speedUpFasterFromEdges = true;
+							aimForCorners = true;
+							break;
+						case 1:
+							aimForCorners = true;
+							break;
+						case 2:
+							speedUpFasterFromEdges = true;
+							break;
+					}
+					// What are we doing?
+					if(speedUpFasterFromEdges){
+						edgesGoFastInstead = false;
+						gravityWell = false;
+						switch(Math.floor(randomBetween(0,4))){
+							case 0:
+								edgesGoFastInstead = false;
+								gravityWell = false;
+								break;
+							case 1:
+								edgesGoFastInstead = true;
+								gravityWell = false;
+								break;
+							case 2:
+								edgesGoFastInstead = false;
+								gravityWell = true;
+								break;
+							case 3:
+								edgesGoFastInstead = true;
+								gravityWell = true;
+								break;
+						}
+					}
+					// Are we extra bouncy?
+					switch(Math.floor(randomBetween(0,2))){
+						case 0:
+							oneInThisChanceOfChanging = 500;
+							break;
+						default:
+							oneInThisChanceOfChanging = 10000000;
+							break;
+					}
+					if(bg6synch==0){
+						switch(Math.floor(randomBetween(0,10))){
+							case 0:
+								ele.style.animation = 'none';
+								break;
+							case 1:
+								ele.style.animation = 'zoomy 2s linear infinite alternate';
+								break;
+							case 1:
+								ele.style.animation = null;
+								break;
+							case 2:
+								if(gate4 || firstRun){
+									ele.setAttribute("style", "--from-rot: " + Math.floor(randomBetween(0,720)) + "deg");
+									ele.setAttribute("style", "--to-rot: " + Math.floor(randomBetween(0,720)) + "deg");
+									let seconds = Math.floor(Math.random()*5+5)
+									a2=Math.random();
+									b2=Math.random();
+									c2=Math.random();
+									d2=Math.random();
+									ele.style.animation = 'rot1 ' + seconds + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
+									gate4 = false;
+								}
+								break;
+						}
+					} else {
+						console.log('bg6synch = '+ bg6synch);
+						
+						switch(bg6synch){
+							case 1:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 0, 0) infinite';
+								break;
+							case 2:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 0, 1) infinite';
+								break;
+							case 3:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 1, 0) infinite';
+								break;
+							case 4:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 1, 1) infinite';
+								break;
+							case 5:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 0) infinite';
+								break;
+							case 6:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 1) infinite';
+								break;
+							case 7:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 0) infinite';
+								break;
+							case 8:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 1) infinite';
+								break;
+							case 9:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 0) infinite';
+								break;
+							case 10:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 1) infinite';
+								break;
+							case 11:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 0) infinite';
+								break;
+							case 12:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 1) infinite';
+								break;
+							case 13:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 0, 0) infinite';
+								break;
+							case 14:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 0, 1) infinite';
+								break;
+							case 15:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 1, 0) infinite';
+								break;
+							case 16:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 1, 1) infinite';
+								break;
+							default:
+								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
+								break;
+						}
+					}
+				} else {
+					gate4 = true;
+				}
+			}
+			
+			// Rotates around the screen in different patterns in synch with another element inversing it
+			// Rotation speed increases as we get closer to the top of the hour
+			function updateDVDAnimationFunction7(ele){
+				updateDVDAnimationFunction1(ele);
+				speedUpFasterFromEdges = true;
+				aimForCorners = false;
+				switch(min%4){
+					case 0:
+						edgesGoFastInstead = false;
+						gravityWell = false;
+						break;
+					case 1:
+						edgesGoFastInstead = true;
+						gravityWell = false;
+						break;
+					case 2:
+						edgesGoFastInstead = false;
+						gravityWell = true;
+						break;
+					case 3:
+						edgesGoFastInstead = true;
+						gravityWell = true;
+						break;
+				}
+			}
+			
+			// Stays calm for 15 minutes, 
+			// starts zooming in and out for 15, 
+			// then wiggles and zooms for 15, 
+			// calms again for 5, zooms again for 5, 
+			// wiggles and zooms again for 4, 
+			// then the last minute it increases in size dramatically.
+			function updateBGAnimationFunction1(ele){
+				// at the top of any minute,
+				if(sec==0 || firstRun){
+					if(min<45){
+						ele.style.animation = 'none';
+					} else {
+						ele.style.animation = 'rotation 5s cubic-bezier(.6, .8, .4, .2) infinite';
+					} 
+				}
+			}
+			
+			// Rotates around the screen in different patterns in synch with another element inversing it
+			// Rotation speed increases as we get closer to the top of the hour
+			function updateBGAnimationFunction2(ele){
+				// at the top of any minute,
+				if(sec==0 || firstRun){
+					if(min<10){
+						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 0) infinite';
+					} else if (min < 20) {
+						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 1) infinite';
+					} else if (min < 30) {
+						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 1) infinite';
+					} else if (min < 40) {
+						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 0) infinite';
+					} else if (min < 50) {
+						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(.25, 2, .75, -1) infinite';
+					} else {
+						a2=Math.random();
+						b2=Math.random();
+						c2=Math.random();
+						d2=Math.random();
+						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
+					}
+				}
+			}
+			
+			// Rotates around the screen in different patterns in synch with another element inversing it
+			// Rotation speed increases as we get closer to the top of the hour
+			function updateBGAnimationFunction3(ele){
+				ele.style.animation = 'wiggle 10s ease-in-out infinite alternate';
+			}
+			
+			// Rotates around the screen in different patterns in synch with another element inversing it
+			// Rotation speed increases as we get closer to the top of the hour
+			function updateBGAnimationFunction4(ele){
+				
+				// at the top of any minute,
+				if(sec%15==0 || firstRun){
+					if(gate4){
+						ele.setAttribute("style", "--from-rot: " + Math.floor(randomBetween(0,720)) + "deg");
+						ele.setAttribute("style", "--to-rot: " + Math.floor(randomBetween(0,720)) + "deg");
+						let seconds = Math.floor(randomBetween(5,15))
+						a2=Math.random();
+						b2=Math.random();
+						c2=Math.random();
+						d2=Math.random();
+						ele.style.animation = 'rot1p ' + seconds + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
+					}
+				}
+			}
+			
+			// 
+			function updateBGAnimationFunction5(ele){
+				
+			}
+			
+			// RANDOM
+			function updateBGAnimationFunction6(ele){
+				// at the top of any minute,
+				if(sec==0 || firstRun){
+					bg6synch = 0;
+					
+					if(Math.floor(randomBetween(0,2))==0) bg6synch = Math.floor(randomBetween(1,25));
+					
+					console.log('bg6synch = '+ bg6synch);
+					
+					switch(bg6synch){
+						case 0:
+							ele.style.animation = null;
+							
+							if(Math.floor(randomBetween(0,2))==0){
+								if(Math.floor(randomBetween(0,2))==0) ele.style.animation = 'wiggle 10s ease-in-out infinite alternate';
+								else ele.style.animation = 'none';
+							} else {
+								ele.setAttribute("style", "--from-rot: " + Math.floor(randomBetween(0,720)) + "deg");
+								ele.setAttribute("style", "--to-rot: " + Math.floor(randomBetween(0,720)) + "deg");
+								let seconds = Math.floor(randomBetween(5,15))
+								a2=Math.random();
+								b2=Math.random();
+								c2=Math.random();
+								d2=Math.random();
+								ele.style.animation = 'rot1p ' + seconds + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
+							} 
+							break;
+						case 1:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 0, 0) infinite';
+							break;
+						case 2:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 0, 1) infinite';
+							break;
+						case 3:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 1, 0) infinite';
+							break;
+						case 4:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 1, 1) infinite';
+							break;
+						case 5:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 0) infinite';
+							break;
+						case 6:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 1) infinite';
+							break;
+						case 7:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 0) infinite';
+							break;
+						case 8:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 1) infinite';
+							break;
+						case 9:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 0) infinite';
+							break;
+						case 10:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 1) infinite';
+							break;
+						case 11:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 0) infinite';
+							break;
+						case 12:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 1) infinite';
+							break;
+						case 13:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 0, 0) infinite';
+							break;
+						case 14:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 0, 1) infinite';
+							break;
+						case 15:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 1, 0) infinite';
+							break;
+						case 16:
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 1, 1) infinite';
+							break;
+						default:
+							a2=Math.random();
+							b2=Math.random();
+							c2=Math.random();
+							d2=Math.random();
+							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
+							break;
+					}
+				}
+			}
+			
+			function updateBGAnimationFunction7(ele){
+				updateBGAnimationFunction1(ele);
+			}
+			
+			changeFuncGroup(0);
+			// Start the animation's first frame
+			window.requestAnimationFrame(animate);
+		</script>
+	</body>
+</html>
