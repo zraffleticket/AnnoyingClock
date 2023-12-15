@@ -30,7 +30,6 @@
 				position: fixed;
 				background-color:#000;
 				z-index: 500;
-				//font-family: Arial, Helvetica, sans-serif;
 				
 				margin:0px;
 				padding:0px;
@@ -54,7 +53,6 @@
 				position: fixed;
 				color:#fff;
 				z-index: 500;
-				//font-family: Arial, Helvetica, sans-serif;
 				
 				margin:0px;
 				padding:0px;
@@ -266,11 +264,18 @@
 		<!-- Positioning Logic -->
 		<script>
 			// Elements positions, directions and speeds
-			const animationCount = 7,
+			const animationCount = 8,
 			      maxRandomChange = 5000,
 			      minRandomChange = 100,
 				  debug = true,
-				  presets = ["DVD logo...?", "Drunken Whip", "Zoomies", "Speen", "Corner shot!", "Random", "DVD logo but with acceleration", "Moving Black Hole"];
+				  presets = ["DVD logo...?", 
+				             "Drunken Whip", 
+							 "Zoomies", 
+							 "Speen", 
+				             "Corner shot!", 
+							 "Random", 
+							 "DVD logo but with acceleration", 
+							 "Accelerate!"];
 				  
 			let x = 0,
 				y = 0,
@@ -286,6 +291,13 @@
 				screenHeight = 0,
 				screenWidth = 0,
 				corner = 0,
+				accelerationFrame = 0,
+				framesUntilNextBounce = 0,
+				framesUntilNextBounceMin = 0,
+				framesUntilNextBounceMax = 100,
+				
+				accelerationOffset = 1,
+				accelerationMultiplier = .1,
 				
 				bh_x = 10000,
 				bh_y = 10000,
@@ -300,6 +312,7 @@
 				grav = 50,
 				dvd_interacts_with_bh = false,
 				invert_attraction = false,
+				startCountingDown = false,
 				
 				firstFrameOfHour = true,
 				firstRun = true,
@@ -315,13 +328,16 @@
 				nextRepositionSecond = 0,
 				
 				movementType = "DVD",
-				oneInThisChanceOfChanging = 100,
+				oneInThisChanceOfChanging = 250,
 				doAnimationOnRePosition = false,
 				
 				aimForCorners = false,
 				edgesGoFastInstead = false,
 				speedUpFasterFromEdges = false,
 				gravityWell = false,
+				waitBeforeNextBounce = false,
+				doAccelleration = false,
+				doJumpyAcceleration = false,
 				
 				gate4 = true,
 				bg6synch=0,
@@ -350,11 +366,30 @@
 						firstRun = true;
 						changeFuncGroup(0);
 						firstFrameOfHour = false; // for the love of all things that are holy just run once
+						
+						switch(Math.floor(randomBetween(0,2))){
+							case 0:
+								waitBeforeNextBounce = true;
+								break;
+							default:
+								waitBeforeNextBounce = false;
+								break;
+						}
 					}
 				} else {
 					firstFrameOfHour = true;
 				}
 				
+				if (startCountingDown) {
+					framesUntilNextBounce--;
+					if(framesUntilNextBounce < 0) {
+						framesUntilNextBounce = 0;
+						startCountingDown = false;
+						updateSpeedFactors("dvd");
+						framesUntilNextBounce = Math.floor(randomBetween(framesUntilNextBounceMin, framesUntilNextBounceMax));
+					}
+				}
+
 				// Every 5 minutes, re-assess some stuff to change
 				if((min%5==0 && sec==0)||firstRun){
 					oneInThisChanceOfChanging = Math.floor(Math.random()*maxRandomChange-minRandomChange)+minRandomChange;
@@ -371,6 +406,7 @@
 			function updateSpeedFactors(option){
 				if(option=="dvd")
 				{
+					accelerationFrame=0;
 					updateColor();
 					//updateTextRandomness(); // TODO upside down, mirrored, reversed, etc
 					setNewSpeedFactor();
@@ -381,6 +417,19 @@
 					} else {
 						speedX = getSpeedFactorXY(speedfactor);
 						speedY = getSpeedFactorXY(speedfactor);
+						if(speedUpFasterFromEdges){
+							speedX/=2.0;
+							speedY/=2.0;
+							if(gravityWell){
+								speedX/=10.0;
+								speedY/=10.0;
+							}
+						}
+						
+						if(doAccelleration || doJumpyAcceleration){
+							speedX=speedX*accelerationMultiplier;
+							speedY=speedY*accelerationMultiplier;
+						}
 					}
 				} else {
 					bh_speedBoost = randomBetween(bh_speedBoostFastest, bh_speedBoostSlowest);
@@ -397,8 +446,9 @@
 			// Update the position and display text
 			function updateDVD(){
 				dvd.innerText = new Date().toLocaleTimeString(); // 11:18:48 AM
-				dvd.innerText = new Date().toLocaleTimeString(); // 11:18:48 AM
-				
+
+				//dvd.innerText = waitBeforeNextBounce;	
+
 				pickCSSAnimation("dvd", funcGroup);
 				
 				if(min==59 || movementType == "CENTER"){
@@ -413,24 +463,42 @@
 					
 					// Don't let us clip off the X axis edges of the screen
 					if (x + dvd.clientWidth >= screenWidth || x < 0) {
+						if(waitBeforeNextBounce) startCountingDown = true;
+						updateSpeedFactors("dvd");
 						dirX *= -1;
 						if(Math.round(0.75*Math.random(),0)==1) dirY *= -1;
 						
 						if(x<0) x=0;
 						else x=screenWidth-1-dvd.clientWidth;
 						
-						updateSpeedFactors("dvd");
+						if(waitBeforeNextBounce){
+							if(framesUntilNextBounce > 0 && startCountingDown){
+								speedX = 0;
+								speedY = 0;
+							} else {
+								framesUntilNextBounce = Math.floor(randomBetween(framesUntilNextBounceMin, framesUntilNextBounceMax));
+							}
+						}
 					}
 					
 					// Don't let us clip off the Y axis edges of the screen
 					if (y + (11*dvd.clientHeight) >= screenHeight || y < 0) {
+						if(waitBeforeNextBounce) startCountingDown = true;
+						updateSpeedFactors("dvd");
 						dirY *= -1;
 						if(Math.round(0.75*Math.random(),0)==1) dirX *= -1;
 						
 						if(y<0) y=0;
 						else y=screenHeight-1-(11*dvd.clientHeight);
 						
-						updateSpeedFactors("dvd");
+						if(waitBeforeNextBounce){
+							if(framesUntilNextBounce > 0 && startCountingDown){
+								speedX = 0;
+								speedY = 0;
+							} else {
+								framesUntilNextBounce = Math.floor(randomBetween(framesUntilNextBounceMin, framesUntilNextBounceMax));
+							}
+						}
 					}
 
 					// Jiggle on mouse hover
@@ -450,6 +518,8 @@
 					x += dirX * speedX;
 					y += dirY * speedY;
 					
+					if(startCountingDown && waitBeforeNextBounce) return;
+					
 					// If the DVD logo interacts with the invisible black hole object
 					if(dvd_interacts_with_bh){
 						// Find the distance between the DVD logo and the black hole
@@ -460,7 +530,6 @@
 						
 						if(distance !== 0){
 							let attractionAcceleration = 9000 / Math.pow(distance,2); //add mass calculation later when mass is variable
-							
 							
 							let xattraction = -1 * attractionAcceleration * Math.cos(angle)
 							let yattraction = -1 * attractionAcceleration * Math.sin(angle)
@@ -509,6 +578,14 @@
 						}
 					}
 					
+					if(doAccelleration){
+						if(accelerationFrame + accelerationOffset > 0){
+							x += dirX * (accelerationFrame + accelerationOffset)*speedX;
+							y += dirY * (accelerationFrame + accelerationOffset)*speedY;
+						}
+						accelerationFrame += 1;
+					}
+					
 					dvd.style.left = x + "px";
 					dvd.style.top = y + "px";
 				} else if (movementType == "RANDOM"){
@@ -544,6 +621,12 @@
 				}
 			}
 			
+			
+			
+		</script>
+		
+		<!-- Not yet implemented -->
+		<script>
 			// Update the position and display text
 			function updateBlackHole(movement_type){
 				if(min==59 || movement_type == "CENTER"){
@@ -660,7 +743,6 @@
 					} catch {}
 				}
 			}
-			
 		</script>
 		
 		<!-- Helper functions that probably won't change so I can collapse the script tag -->
@@ -714,7 +796,7 @@
 				let getthereinNframes = 100.0;
 				speedX = Math.abs(x-cornerX)/getthereinNframes;
 				speedY = Math.abs(y-cornerY)/getthereinNframes;
-									
+							
 				if(Math.abs(speedX) < 0.25) speedX = getSpeedFactorXY(speedfactor);
 				if(Math.abs(speedY) < 0.25) speedY = getSpeedFactorXY(speedfactor);
 			}
@@ -803,7 +885,29 @@
 			
 			// Sets the color of the DVD logo time thing
 			function updateColor(){
-				dvd.style.color = getNewRandomColorHSL();
+				var today = new Date();
+
+				// christmas
+				if(today.getMonth() + 1 == 12 && today.getDate() >= 13 && today.getDate() <= 25)
+				{
+					var darkxmas = Math.floor(randomBetween(0,8)).toString();
+					darkxmas += Math.floor(randomBetween(0,16)).toString(16);
+					switch(Math.floor(randomBetween(0,3))){
+						case 0:
+							var whitexmas = Math.round(randomBetween(8,16)).toString(16);
+							whitexmas = whitexmas.padStart(6,whitexmas);
+							dvd.style.color = "#" + whitexmas;
+							break;
+						case 1:
+							dvd.style.color = "#FF" + darkxmas + darkxmas;
+							break;
+						default:
+							dvd.style.color = "#" + darkxmas + "FF" + darkxmas;
+							break;
+					}
+				} else {
+					dvd.style.color = getNewRandomColorHSL();
+				}
 			}
 			
 			// Returns a new random X/Y speed factor
@@ -874,6 +978,8 @@
 					dvd.style.animation = 'none';
 					dvd.offsetHeight; /* trigger reflow */
 				}
+				
+				waitBeforeNextBounce = Math.random() < 0.5;
 				
 				// Get the snackbar DIV
 				var snack = document.getElementById("snackbar");
@@ -949,6 +1055,9 @@
 							case 7:
 								updateDVDAnimationFunction7(dvd);
 								break;
+							case 8:
+								updateDVDAnimationFunction8(dvd);
+								break;
 							
 						}
 						dvd.offsetHeight; /* trigger reflow */
@@ -975,6 +1084,9 @@
 							case 7:
 								updateBGAnimationFunction7(bg);
 								break;
+							case 8:
+								updateBGAnimationFunction8(bg);
+								break;
 						}
 						bg.offsetHeight; /* trigger reflow */
 					}
@@ -990,6 +1102,7 @@
 				edgesGoFastInstead = false;
 				speedUpFasterFromEdges = false;
 				gravityWell = false;
+				doAccelleration = false;
 				
 				// at the top of any minute,
 				if(sec==0 || firstRun){
@@ -1018,6 +1131,7 @@
 				edgesGoFastInstead = false;
 				speedUpFasterFromEdges = false;
 				gravityWell = false;
+				doAccelleration = false;
 				
 				// at the top of any minute,
 				if(sec==0 || firstRun){
@@ -1044,6 +1158,7 @@
 				edgesGoFastInstead = false;
 				speedUpFasterFromEdges = false;
 				gravityWell = false;
+				doAccelleration = false;
 				movementType = "RANDOM";
 				doAnimationOnRePosition = true;
 			}
@@ -1055,6 +1170,7 @@
 				edgesGoFastInstead = false;
 				speedUpFasterFromEdges = false;
 				gravityWell = false;
+				doAccelleration = false;
 				
 				if(min%2==0)
 					movementType = "DVD";
@@ -1083,6 +1199,7 @@
 			function updateDVDAnimationFunction5(ele){
 				movementType = "DVD";
 				aimForCorners = true;
+				doAccelleration = false;
 				
 				ele.style.animation = 'none';
 				// at the top of any minute,
@@ -1160,6 +1277,14 @@
 							break;
 						default:
 							oneInThisChanceOfChanging = 10000000;
+							break;
+					}
+					switch(Math.floor(randomBetween(0,2))){
+						case 0:
+							doAccelleration = true;
+							break;
+						default:
+							doAccelleration = false;
 							break;
 					}
 					if(bg6synch==0){
@@ -1255,6 +1380,7 @@
 				updateDVDAnimationFunction1(ele);
 				speedUpFasterFromEdges = true;
 				aimForCorners = false;
+				doAccelleration = false;
 				switch(min%4){
 					case 0:
 						edgesGoFastInstead = false;
@@ -1274,6 +1400,76 @@
 						break;
 				}
 			}
+			
+			function updateDVDAnimationFunction8(ele){
+				movementType = "DVD";
+				
+				aimForCorners = false;
+				edgesGoFastInstead = false;
+				speedUpFasterFromEdges = false;
+				gravityWell = false;
+				doAccelleration = true;
+				
+				// at the top of any minute,
+				//if(sec==0 || firstRun){
+				//	if(min<15){
+				//		ele.style.animation = 'none';
+				//	} else if (min<30) {
+				//		ele.style.animation = 'zoomy 2s linear infinite alternate';
+				//	} else if (min<45) {
+				//		ele.style.animation = null;
+				//	} else if (min<50) {
+				//		ele.style.animation = 'none';
+				//	} else if (min<55){
+				//		ele.style.animation = 'zoomy 2s linear infinite alternate';
+				//	} else {
+				//		ele.style.animation = null; 
+				//	} 
+				//}
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 			
 			// Stays calm for 15 minutes, 
 			// starts zooming in and out for 15, 
@@ -1436,6 +1632,11 @@
 			
 			function updateBGAnimationFunction7(ele){
 				updateBGAnimationFunction1(ele);
+			}
+			
+			// 
+			function updateBGAnimationFunction8(ele){
+				
 			}
 			
 			changeFuncGroup(0);
