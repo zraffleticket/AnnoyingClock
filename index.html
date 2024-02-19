@@ -224,6 +224,30 @@
 					transform: rotate(350deg);
 				} 
 			}
+
+			@keyframes drunkard { 
+				0% { 
+					transform: rotate(355deg);
+				} 
+				50% {
+					transform: rotate(365deg);
+				}
+				100% { 
+					transform: rotate(355deg);
+				} 
+			}
+
+			@keyframes inversedrunkard { 
+				0% { 
+					transform: rotate(365deg);
+				}
+				50% {
+					transform: rotate(355deg);
+				}
+				100% { 
+					transform: rotate(365deg);
+				} 
+			}
 			
 			@keyframes rot1 {
 				0%{
@@ -264,18 +288,18 @@
 		<!-- Positioning Logic -->
 		<script>
 			// Elements positions, directions and speeds
-			const animationCount = 8,
-			      maxRandomChange = 5000,
+			const maxRandomChange = 5000,
 			      minRandomChange = 100,
 				  debug = true,
 				  presets = ["DVD logo...?", 
-				             "Drunken Whip", 
+				             "Whip it", 
 							 "Zoomies", 
 							 "Speen", 
 				             "Corner shot!", 
 							 "Random", 
 							 "DVD logo but with acceleration", 
-							 "Accelerate!"];
+							 "Accelerate!",
+							 "Medical Emergency"];
 				  
 			let x = 0,
 				y = 0,
@@ -327,6 +351,13 @@
 				repositionInterval = 5,
 				nextRepositionSecond = 0,
 				
+				drunkardReset = true,
+				drunkardA = 0.1,
+				drunkardB = 0.1,
+				drunkardC = 0.1,
+				drunkardD = 0.1,
+				drunkardFactor = 25,
+				
 				movementType = "DVD",
 				oneInThisChanceOfChanging = 250,
 				doAnimationOnRePosition = false,
@@ -338,6 +369,7 @@
 				waitBeforeNextBounce = false,
 				doAccelleration = false,
 				doJumpyAcceleration = false,
+				pastelOnly = false,
 				
 				gate4 = true,
 				bg6synch=0,
@@ -353,8 +385,8 @@
 			let bh = document.getElementById("blackhole");
 			
 			function updateGlobalVariables(){
-				min = parseInt(new Date().getMinutes());
-				sec = parseInt(new Date().getSeconds());
+				min = parseInt(getDate().getMinutes());
+				sec = parseInt(getDate().getSeconds());
 				
 				screenHeight = document.body.clientHeight;
 				screenWidth = document.body.clientWidth;
@@ -445,9 +477,9 @@
 			
 			// Update the position and display text
 			function updateDVD(){
-				dvd.innerText = new Date().toLocaleTimeString(); // 11:18:48 AM
+				dvd.innerText = getDate().toLocaleTimeString(); // 11:18:48 AM
 
-				//dvd.innerText = waitBeforeNextBounce;	
+				//dvd.innerText = "Merry Christmas!";	
 
 				pickCSSAnimation("dvd", funcGroup);
 				
@@ -599,7 +631,7 @@
 								
 								doReposition = false;
 								
-								repositionInterval = Math.floor(randomBetween(10, (60-min)/12.0))
+								repositionInterval = Math.floor(randomBetween(8, (60-min)/12.0)) // 10
 								
 								if(repositionInterval<=0) repositionInterval=2;
 								
@@ -625,7 +657,7 @@
 			
 		</script>
 		
-		<!-- Not yet implemented -->
+		<!-- Not yet implemented... Black Hole -->
 		<script>
 			// Update the position and display text
 			function updateBlackHole(movement_type){
@@ -745,7 +777,7 @@
 			}
 		</script>
 		
-		<!-- Helper functions that probably won't change so I can collapse the script tag -->
+		<!-- Helper functions that probably won't change much so I can collapse the script tag -->
 		<script>
 			
 			function aimNearCorner(){
@@ -820,7 +852,7 @@
 					}
 				}
 				
-				day.innerHTML = new Date().toLocaleDateString('en-us', { weekday:"long", month:"long", day:"numeric"}) //+ "<br /><sub><sub><sub><sub><sub><sub><sub><sub> (" + funcGroup + " / " + oneInThisChanceOfChanging + ")</sub></sub></sub></sub></sub></sub></sub></sub>"
+				day.innerHTML = getDate().toLocaleDateString('en-us', { weekday:"long", month:"long", day:"numeric"}) //+ "<br /><sub><sub><sub><sub><sub><sub><sub><sub> (" + funcGroup + " / " + oneInThisChanceOfChanging + ")</sub></sub></sub></sub></sub></sub></sub></sub>"
 			}
 			
 			function getFonts(ele){
@@ -854,10 +886,10 @@
 			}
 			
 			// Gets a new HSL style color and returns it in hex form
-			function getNewRandomColorHSL() {
+			function getNewRandomColorHSL(minlightness) {
 				let h = Math.floor(Math.random() * 360);
 				let s = Math.floor(Math.random() * 100);
-				let l = 50+Math.floor(Math.random() * 50);
+				let l = minlightness+Math.floor(Math.random() * 50);
 				
 				// 50-50 chance of just fully saturated color, or of pastel
 				if(Math.floor(Math.random()*2,0)>0){
@@ -885,16 +917,16 @@
 			
 			// Sets the color of the DVD logo time thing
 			function updateColor(){
-				var today = new Date();
+				var today = getDate();
 
-				// christmas
 				if(today.getMonth() + 1 == 12 && today.getDate() >= 13 && today.getDate() <= 25)
 				{
+					// Christmas
 					var darkxmas = Math.floor(randomBetween(0,8)).toString();
 					darkxmas += Math.floor(randomBetween(0,16)).toString(16);
 					switch(Math.floor(randomBetween(0,3))){
 						case 0:
-							var whitexmas = Math.round(randomBetween(8,16)).toString(16);
+							var whitexmas = Math.floor(randomBetween(8,16)).toString(16);
 							whitexmas = whitexmas.padStart(6,whitexmas);
 							dvd.style.color = "#" + whitexmas;
 							break;
@@ -906,7 +938,9 @@
 							break;
 					}
 				} else {
-					dvd.style.color = getNewRandomColorHSL();
+					// Random
+					if(pastelOnly) dvd.style.color = getNewRandomColorHSL(80);
+					else dvd.style.color = getNewRandomColorHSL(50);
 				}
 			}
 			
@@ -948,8 +982,8 @@
 				var e = window.event || e; // old IE support
 				var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
 				
-				var nextGroup = funcGroup + delta + animationCount-1;
-				nextGroup = nextGroup%animationCount;
+				var nextGroup = funcGroup + delta + presets.length-1;
+				nextGroup = nextGroup%presets.length;
 				nextGroup++;
 				
 				//console.log("D" + delta + " at " + funcGroup + " next is " + nextGroup);
@@ -963,7 +997,7 @@
 					let oldgroup = funcGroup;
 					let newgroup = preset;
 					if(preset==0) {
-						newgroup = Math.floor(Math.random()*animationCount+1);
+						newgroup = Math.floor(Math.random()*presets.length+1);
 						if(newgroup==oldgroup) {
 							changeFuncGroup(0);
 							return;
@@ -1004,6 +1038,13 @@
 				else ele.style.left = (fadeX) + "%";
 				if(fadeY > 50) ele.style.bottom = (100.0 - fadeY) + "%";
 				else ele.style.top = (fadeY) + "%";
+			}
+
+			function getDate(){
+				var curdate = new Date();
+				//var newyears = new Date(curdate.getTime() + 105*60000);
+				//return newyears;
+				return curdate;
 			}
 			
 			// Add events
@@ -1058,6 +1099,9 @@
 							case 8:
 								updateDVDAnimationFunction8(dvd);
 								break;
+							case 9:
+								updateDVDAnimationFunction9(dvd);
+								break;
 							
 						}
 						dvd.offsetHeight; /* trigger reflow */
@@ -1086,6 +1130,9 @@
 								break;
 							case 8:
 								updateBGAnimationFunction8(bg);
+								break;
+							case 9:
+								updateBGAnimationFunction9(bg);
 								break;
 						}
 						bg.offsetHeight; /* trigger reflow */
@@ -1428,8 +1475,57 @@
 				//}
 			}
 			
-			
-			
+			function updateDVDAnimationFunction9(ele){
+				movementType = "DVD";
+				
+				// at the top of any minute,
+				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
+					if(drunkardReset){
+						ele.style.animation = 'inversedrunkard ' + ((60-min+5)/drunkardFactor) + 's cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ') infinite reverse';
+						//console.log('cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ')');
+						drunkardReset = false;
+						let casestatement = Math.round(Math.random()*10);
+						console.log(casestatement);
+						switch(casestatement){
+							case 0:
+								aimForCorners = false;
+								edgesGoFastInstead = false;
+								speedUpFasterFromEdges = true;
+								gravityWell = false;
+								doAccelleration = false;
+								break;
+							case 1:
+								aimForCorners = true;
+								edgesGoFastInstead = false;
+								speedUpFasterFromEdges = false;
+								gravityWell = false;
+								doAccelleration = false;
+								break;
+							case 2:
+								aimForCorners = false;
+								edgesGoFastInstead = false;
+								speedUpFasterFromEdges = false;
+								gravityWell = true;
+								doAccelleration = false;
+								break;
+							case 3:
+								aimForCorners = false;
+								edgesGoFastInstead = true;
+								speedUpFasterFromEdges = false;
+								gravityWell = true;
+								doAccelleration = false;
+								break;
+							default:
+								aimForCorners = false;
+								edgesGoFastInstead = false;
+								speedUpFasterFromEdges = false;
+								gravityWell = false;
+								doAccelleration = false;
+								break;
+						}
+					}
+				} 
+			}
 			
 			
 			
@@ -1637,6 +1733,24 @@
 			// 
 			function updateBGAnimationFunction8(ele){
 				
+			}
+
+			function updateBGAnimationFunction9(ele){
+				// at the top of any minute,
+				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
+					if(drunkardReset)
+					{
+						drunkardA = Math.round(Math.random()*1000)/1000;
+						drunkardB = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
+						drunkardC = Math.round(Math.random()*1000)/1000;
+						drunkardD = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
+						ele.style.animation = 'drunkard ' + ((60-min+5)/drunkardFactor) + 's cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ') infinite reverse';
+					}
+				}
+				else 
+				{
+					drunkardReset = true;
+				}
 			}
 			
 			changeFuncGroup(0);
