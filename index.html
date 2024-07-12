@@ -155,6 +155,18 @@
 					font-size: 0px;
 				} 
 			}
+
+			@keyframes flyzoom {
+				0% { 
+					font-size: 30px;
+				}
+				50% {
+					font-size: 70px;
+				}
+				100% { 
+					font-size: 30px;
+				} 
+			}
 			
 			@keyframes bigzoom { 
 				0% { 
@@ -299,7 +311,8 @@
 							 "Random", 
 							 "DVD logo but with acceleration", 
 							 "Accelerate!",
-							 "Medical Emergency"];
+							 "Medical Emergency",
+							 "Fly in a Jar"];
 				  
 			let x = 0,
 				y = 0,
@@ -315,6 +328,19 @@
 				screenHeight = 0,
 				screenWidth = 0,
 				corner = 0,
+				isBounceFrame = 1,
+
+				sineStretchMin = 10.0;
+				sineStretchMax = 250.0;
+				sineAmplifyMin = 1;
+				sineAmplifyMax = 5.0;
+
+				sineFrame = 0,
+				sineXStretch = 100.0,
+				sineYStretch = 100.0,
+				sineXAmplify = 2.0,
+				sineYAmplify = 2.0,
+
 				accelerationFrame = 0,
 				framesUntilNextBounce = 0,
 				framesUntilNextBounceMin = 0,
@@ -411,6 +437,11 @@
 				} else {
 					firstFrameOfHour = true;
 				}
+
+				// if(debug){
+				// 	oneInThisChanceOfChanging=100000000;
+				// 	changeFuncGroup(10);
+				// }
 				
 				if (startCountingDown) {
 					framesUntilNextBounce--;
@@ -428,17 +459,20 @@
 					getFonts(dvd);
 					getFonts(day);
 				}
-				
-				if(debug){
-					//oneInThisChanceOfChanging=100000000;
-				}
 			}
 			
 			// Update the speeds used to calculate the time element's position
 			function updateSpeedFactors(option){
+				isBounceFrame = 1;
 				if(option=="dvd")
 				{
 					accelerationFrame=0;
+					
+					sineXStretch = randomBetween(sineStretchMin, sineStretchMax);
+					sineYStretch = randomBetween(sineStretchMin, sineStretchMax);
+					sineXAmplify = randomBetween(sineAmplifyMin, sineAmplifyMax);
+					sineYAmplify = randomBetween(sineAmplifyMin, sineAmplifyMax);
+
 					updateColor();
 					//updateTextRandomness(); // TODO upside down, mirrored, reversed, etc
 					setNewSpeedFactor();
@@ -463,6 +497,8 @@
 							speedY=speedY*accelerationMultiplier;
 						}
 					}
+
+					
 				} else {
 					bh_speedBoost = randomBetween(bh_speedBoostFastest, bh_speedBoostSlowest);
 					//if(aimForCorners){
@@ -610,14 +646,24 @@
 						}
 					}
 					
-					if(doAccelleration){
+					if(useSineWaveOffset)
+					{
+						x += dirX * (accelerationFrame + sineXAmplify)*Math.sin(sineFrame/sineXStretch)*speedX;
+						y += dirY * (accelerationFrame + sineYAmplify)*Math.cos(sineFrame/sineYStretch)*speedY;
+						sineFrame++;
+						if(doAccelleration){
+							accelerationFrame += 1;
+						}
+					}
+
+					if(doAccelleration && !useSineWaveOffset){
 						if(accelerationFrame + accelerationOffset > 0){
 							x += dirX * (accelerationFrame + accelerationOffset)*speedX;
 							y += dirY * (accelerationFrame + accelerationOffset)*speedY;
 						}
 						accelerationFrame += 1;
 					}
-					
+
 					dvd.style.left = x + "px";
 					dvd.style.top = y + "px";
 				} else if (movementType == "RANDOM"){
@@ -965,6 +1011,7 @@
 				updateBlackHole("DVD");
 				firstRun = false; // gate to refresh animations at the top of the hour
 				window.requestAnimationFrame(animate);
+				isBounceFrame = 0;
 			}
 			
 			function randomBetween(max, min){
@@ -1102,6 +1149,9 @@
 							case 9:
 								updateDVDAnimationFunction9(dvd);
 								break;
+							case 10:
+								updateDVDAnimationFunction10(dvd);
+								break;
 							
 						}
 						dvd.offsetHeight; /* trigger reflow */
@@ -1134,6 +1184,9 @@
 							case 9:
 								updateBGAnimationFunction9(bg);
 								break;
+							case 10:
+								updateBGAnimationFunction10(bg);
+								break;
 						}
 						bg.offsetHeight; /* trigger reflow */
 					}
@@ -1150,6 +1203,7 @@
 				speedUpFasterFromEdges = false;
 				gravityWell = false;
 				doAccelleration = false;
+				useSineWaveOffset = false;
 				
 				// at the top of any minute,
 				if(sec==0 || firstRun){
@@ -1179,6 +1233,7 @@
 				speedUpFasterFromEdges = false;
 				gravityWell = false;
 				doAccelleration = false;
+				useSineWaveOffset = false;
 				
 				// at the top of any minute,
 				if(sec==0 || firstRun){
@@ -1208,6 +1263,7 @@
 				doAccelleration = false;
 				movementType = "RANDOM";
 				doAnimationOnRePosition = true;
+				useSineWaveOffset = false;
 			}
 			
 			// Rotates around the screen in different patterns in synch with another element inversing it
@@ -1218,6 +1274,7 @@
 				speedUpFasterFromEdges = false;
 				gravityWell = false;
 				doAccelleration = false;
+				useSineWaveOffset = false;
 				
 				if(min%2==0)
 					movementType = "DVD";
@@ -1247,6 +1304,7 @@
 				movementType = "DVD";
 				aimForCorners = true;
 				doAccelleration = false;
+				useSineWaveOffset = false;
 				
 				ele.style.animation = 'none';
 				// at the top of any minute,
@@ -1276,7 +1334,8 @@
 			// RANDOM
 			function updateDVDAnimationFunction6(ele){
 				movementType = "DVD";
-				
+				useSineWaveOffset = false;
+
 				// at the top of any minute,
 				if(sec==0 || firstRun){
 					speedUpFasterFromEdges = false;
@@ -1324,6 +1383,14 @@
 							break;
 						default:
 							oneInThisChanceOfChanging = 10000000;
+							break;
+					}
+					switch(Math.floor(randomBetween(0,2))){
+						case 0:
+							useSineWaveOffset = false;
+							break;
+						default:
+							useSineWaveOffset = true;
 							break;
 					}
 					switch(Math.floor(randomBetween(0,2))){
@@ -1428,6 +1495,7 @@
 				speedUpFasterFromEdges = true;
 				aimForCorners = false;
 				doAccelleration = false;
+				useSineWaveOffset = false;
 				switch(min%4){
 					case 0:
 						edgesGoFastInstead = false;
@@ -1456,6 +1524,7 @@
 				speedUpFasterFromEdges = false;
 				gravityWell = false;
 				doAccelleration = true;
+				useSineWaveOffset = false;
 				
 				// at the top of any minute,
 				//if(sec==0 || firstRun){
@@ -1477,6 +1546,7 @@
 			
 			function updateDVDAnimationFunction9(ele){
 				movementType = "DVD";
+				useSineWaveOffset = false;
 				
 				// at the top of any minute,
 				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
@@ -1527,7 +1597,38 @@
 				} 
 			}
 			
-			
+			function updateDVDAnimationFunction10(ele){
+				movementType = "DVD";
+
+				oneInThisChanceOfChanging = 10000000;
+				useSineWaveOffset = true;
+
+				speedUpFasterFromEdges = false;
+				edgesGoFastInstead = false;
+				gravityWell = false;
+				aimForCorners = false;
+				speedUpFasterFromEdges = false;
+				waitBeforeNextBounce = false;
+				
+				doAccelleration = min%10>=5;
+				
+				
+				// if(sec==0 || firstRun){
+				// 	if(min<45){
+				// 		ele.style.animation = 'none';
+				// 	} else if (min<50) {
+				// 		ele.style.animation = 'zoomy 2s linear infinite alternate';
+				// 	} else if (min<55) {
+				// 		ele.style.animation = null;
+				// 	}
+				// }
+				
+				if(min>30 && (sec%4==0 || firstRun)){
+					dvd.style.animation = 'none'; 
+					dvd.offsetHeight; /* trigger reflow */
+					dvd.style.animation = 'flyzoom 2s cubic-bezier(' + Math.random() + ',' + randomBetween(-1.5,1.5) + ',' + Math.random() + ',' + randomBetween(-1.5,1.5) + ') infinite alternate';
+				}
+			}
 			
 			
 			
@@ -1752,8 +1853,13 @@
 					drunkardReset = true;
 				}
 			}
+
 			
-			changeFuncGroup(0);
+			function updateBGAnimationFunction10(ele){
+				
+			}
+			
+			changeFuncGroup(10);
 			// Start the animation's first frame
 			window.requestAnimationFrame(animate);
 		</script>
