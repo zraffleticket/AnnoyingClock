@@ -16,8 +16,8 @@
 			}
 
 			#black {
-				height: 100vh;
-				width: 100vw;
+				height: calc(100% - 6px);
+				width: calc(100% - 6px);
 				z-index: 500;
 			}
 			
@@ -61,6 +61,8 @@
 				height:5px;
 				
 				
+				min-width: 200px;
+				max-width: 400px;
 				white-space: nowrap;
 				background-repeat: no-repeat;
 				background-size: 75px;
@@ -203,13 +205,13 @@
 			
 			@keyframes annoyingrotation { 
 				0% { 
-					transform: rotate(720deg);
+					transform: rotate(0deg);
 				} 
 				50% { 
-					transform: rotate(0deg);
+					transform: rotate(-720deg);
 				}
 				100% { 
-					transform: rotate(720deg);
+					transform: rotate(0deg);
 				} 
 			}
 			
@@ -307,12 +309,13 @@
 				             "Whip it", 
 							 "Zoomies", 
 							 "Speen", 
-				             "Corner shot!", 
+				             "Corner Shot!", 
 							 "Random", 
-							 "DVD logo but with acceleration", 
+							 "DVD logo... But With Acceleration!", 
 							 "Accelerate!",
 							 "Medical Emergency",
-							 "Fly in a Jar"];
+							 "Fly in a Jar",
+							 "Two Shots of Vodka"];
 				  
 			let x = 0,
 				y = 0,
@@ -329,23 +332,45 @@
 				screenWidth = 0,
 				corner = 0,
 				isBounceFrame = 1,
+				debugmode = false,
 
-				sineStretchMin = 10.0;
-				sineStretchMax = 250.0;
-				sineAmplifyMin = 1;
-				sineAmplifyMax = 5.0;
+				sineStretchMin = 10.0,
+				sineStretchMax = 250.0,
+				sineAmplifyMin = 1,
+				sineAmplifyMax = 5.0,
 
 				sineFrame = 0,
 				sineXStretch = 100.0,
 				sineYStretch = 100.0,
 				sineXAmplify = 2.0,
 				sineYAmplify = 2.0,
+				sineSpeedXFunction = 1,
+				sineSpeedYFunction = 1,
+				sineXFunction = 1,
+				sineYFunction = 1,
 
 				accelerationFrame = 0,
 				framesUntilNextBounce = 0,
 				framesUntilNextBounceMin = 0,
 				framesUntilNextBounceMax = 100,
 				
+				useCubicAcceleration = true,
+				cubicX1 = 1,
+				cubicX2 = 1,
+				cubicY1 = 1,
+				cubicY2 = 1,
+				cubicXMul = 1.0,
+				cubicYMul = 1.0,
+				negateCubicX = true,
+				negateCubicY = true,
+				invertCubicX = true,
+				invertCubicY = true,
+				cubicXFrames = 1,
+				cubicYFrames = 1,
+				cubicMinMultiplier = 1,
+				cubicMaxMultiplier = 10,
+				cubicMinFrames = 100,
+				cubicMaxFrames = 2000,
 				accelerationOffset = 1,
 				accelerationMultiplier = .1,
 				
@@ -413,7 +438,7 @@
 			function updateGlobalVariables(){
 				min = parseInt(getDate().getMinutes());
 				sec = parseInt(getDate().getSeconds());
-				
+
 				screenHeight = document.body.clientHeight;
 				screenWidth = document.body.clientWidth;
 				doAnimationOnRePosition = false;
@@ -424,6 +449,10 @@
 						firstRun = true;
 						changeFuncGroup(0);
 						firstFrameOfHour = false; // for the love of all things that are holy just run once
+
+						// Hopefully this fixes a bug, we'll see.
+						bg.style.top = 0;
+						bg.style.left = 0;
 						
 						switch(Math.floor(randomBetween(0,2))){
 							case 0:
@@ -442,7 +471,7 @@
 				// 	oneInThisChanceOfChanging=100000000;
 				// 	changeFuncGroup(10);
 				// }
-				
+
 				if (startCountingDown) {
 					framesUntilNextBounce--;
 					if(framesUntilNextBounce < 0) {
@@ -460,6 +489,96 @@
 					getFonts(day);
 				}
 			}
+
+			function Bezier(t , initial , p1, p2, final){
+				return (1 - t) * (1 - t) * (1 - t) * initial
+						+
+						3 * (1 - t) * (1 - t) * t * p1
+						+
+						3 * (1 - t) * t * t * p2
+						+
+						t * t * t * final;
+			}
+
+			function CalculateCustomSine(amplify, stretch, val, speed, wavefunc){
+				let wavesec = 0;
+				if (sec == 0) wavesec = 1
+				else wavesec = sec
+
+				if(amplify == 0) amplify = 0.0000000001;
+				if(stretch == 0) stretch = 0.0000000001;
+				if(val == 0) val = 0.0000000001;
+				speed = speed/2.0;
+
+				let retvalue = 1.0;
+				
+				switch(wavefunc){
+					case 1:
+						retvalue = speed*amplify*Math.sin((val - Math.sin(val))/stretch);
+						break;
+					case 2:
+						val = val/10.0
+						retvalue = speed*amplify*amplify*Math.sin((val - Math.sin(val/stretch)));
+						break;
+					case 3:
+						val = val/10.0
+						retvalue = speed*amplify*Math.sin((val * Math.sin(val))/stretch);
+						break;
+					case 4:
+						val = val/amplify/amplify
+						retvalue = speed*amplify*amplify*Math.sin((val * Math.sin(val/stretch)));
+						break;
+					case 5:
+						val = val/5.0/amplify
+						retvalue = speed*amplify*Math.sin(val*val/stretch)+Math.sin(val);
+						break;
+					case 6:
+						val = Math.abs(val/(speed*(250.0-speed)));
+						retvalue = speed*amplify*Math.sin(val*val/speed);
+						break;
+					case 7:
+						val = val/10.0/amplify
+						retvalue = speed*Math.sin(val*Math.tan(val)/stretch)/Math.tan(val);
+						break;
+					case 8:
+						retvalue = speed*amplify*Math.sin(val*Math.tan(val/stretch))/Math.tan(val/stretch)/(60-wavesec);
+						break;
+					case 9:
+						val = val/25
+						retvalue = speed*speed*amplify*amplify*Math.sin(val*val/(stretch*stretch*speed*speed))*Math.sin(val)/(60-wavesec);
+						break;
+					case 10:
+						val = val/amplify/stretch
+						retvalue = speed*amplify*amplify*amplify*Math.sin(val*val)*Math.sin(val/stretch);
+						break;
+					default:
+						retvalue = speed*amplify*Math.sin(val/stretch);
+						break;
+				}
+
+				retvalue = retvalue*(0.75+(60-min)/120.0)
+				return retvalue;
+			}
+
+			function updateCubicsX()
+			{
+				cubicXMul = randomBetween(cubicMinMultiplier, cubicMaxMultiplier);
+				cubicXFrames = Math.floor(randomBetween(cubicMinFrames, cubicMaxFrames));
+				cubicX1 = randomBetween(-1.5,1.5);
+				cubicX2 = randomBetween(-1.5,1.5);
+				negateCubicX = Math.floor(randomBetween(0,2)) == 0;
+				invertCubicX = Math.floor(randomBetween(0,2)) == 0;
+			}
+
+			function updateCubicsY()
+			{
+				cubicYMul = randomBetween(cubicMinMultiplier, cubicMaxMultiplier);
+				cubicYFrames = Math.floor(randomBetween(cubicMinFrames, cubicMaxFrames));
+				cubicY1 = randomBetween(-1.5,1.5);
+				cubicY2 = randomBetween(-1.5,1.5);
+				negateCubicY = Math.floor(randomBetween(0,2)) == 0;
+				invertCubicY = Math.floor(randomBetween(0,2)) == 0;
+			}
 			
 			// Update the speeds used to calculate the time element's position
 			function updateSpeedFactors(option){
@@ -473,6 +592,12 @@
 					sineXAmplify = randomBetween(sineAmplifyMin, sineAmplifyMax);
 					sineYAmplify = randomBetween(sineAmplifyMin, sineAmplifyMax);
 
+					sineXFunction = Math.floor(randomBetween(-5,5));
+					sineYFunction = Math.floor(randomBetween(-5,5));
+
+					updateCubicsX();
+					updateCubicsY();
+
 					updateColor();
 					//updateTextRandomness(); // TODO upside down, mirrored, reversed, etc
 					setNewSpeedFactor();
@@ -483,6 +608,12 @@
 					} else {
 						speedX = getSpeedFactorXY(speedfactor);
 						speedY = getSpeedFactorXY(speedfactor);
+						if(useSineWaveOffset){
+							//speedX = CalculateCustomSine(randomBetween(0,2), randomBetween(0,2),speedX,speedX,sineSpeedXFunction); // too chaotic
+							//speedY = CalculateCustomSine(randomBetween(0,2), randomBetween(0,2),speedY,speedY,sineSpeedYFunction); // too chaotic
+							speedX += (Math.sin(speedX)*sineXFunction)
+							speedY += (Math.cos(speedY)*sineYFunction)
+						}
 						if(speedUpFasterFromEdges){
 							speedX/=2.0;
 							speedY/=2.0;
@@ -497,8 +628,10 @@
 							speedY=speedY*accelerationMultiplier;
 						}
 					}
-
-					
+					if(speedX == 0)
+						speedX = 0.001
+					if(speedY == 0)
+						speedY = 0.001
 				} else {
 					bh_speedBoost = randomBetween(bh_speedBoostFastest, bh_speedBoostSlowest);
 					//if(aimForCorners){
@@ -648,10 +781,16 @@
 					
 					if(useSineWaveOffset)
 					{
-						x += dirX * (accelerationFrame + sineXAmplify)*Math.sin(sineFrame/sineXStretch)*speedX;
-						y += dirY * (accelerationFrame + sineYAmplify)*Math.cos(sineFrame/sineYStretch)*speedY;
+						let sinemul = 1.0;
+						if(useCubicAcceleration)
+							sinemul = 0.25;
+
+						x += dirX * CalculateCustomSine(accelerationFrame + sineXAmplify, sineXStretch, sineFrame, speedX, sineXFunction) * sinemul;
+						y += dirY * CalculateCustomSine(accelerationFrame + sineYAmplify, sineYStretch, sineFrame, speedY, sineYFunction) * sinemul;
+						//x += dirX * (accelerationFrame + sineXAmplify)*Math.sin((sineFrame)/sineXStretch)*speedX;
+						//y += dirY * (accelerationFrame + sineYAmplify)*Math.cos((sineFrame)/sineYStretch)*speedY;
 						sineFrame++;
-						if(doAccelleration){
+						if(doAccelleration || useCubicAcceleration){
 							accelerationFrame += 1;
 						}
 					}
@@ -661,6 +800,46 @@
 							x += dirX * (accelerationFrame + accelerationOffset)*speedX;
 							y += dirY * (accelerationFrame + accelerationOffset)*speedY;
 						}
+						accelerationFrame += 1;
+					}
+
+					if(useCubicAcceleration)
+					{
+						let mul = 1.0, cubicstart = 0, cubicend = 1;
+						if(negateCubicX)
+							mul = -1.0
+
+						if(useSineWaveOffset)
+							mul /= 4.0
+
+						if(invertCubicX)
+						{
+							cubicstart = 1;
+							cubicend = 0;
+						}
+
+						x += mul * dirX * cubicXMul * Bezier((accelerationFrame%cubicXFrames/cubicXFrames), cubicstart, cubicX1, cubicX2, cubicend)*speedX
+
+						mul = 1.0; 
+						cubicstart = 0; 
+						cubicend = 1;
+
+						if(negateCubicY)
+							mul = -1.0
+
+						if(useSineWaveOffset)
+							mul /= 4.0
+
+						if(invertCubicY){
+							cubicstart = 1;
+							cubicend = 0;
+						}
+						y += mul * dirY * cubicYMul * Bezier((accelerationFrame%cubicYFrames/cubicYFrames), cubicstart, cubicY1, cubicY2, cubicend)*speedY
+
+						if(accelerationFrame%cubicXFrames==0)
+							updateCubicsX();
+						if(accelerationFrame%cubicYFrames==0)
+							updateCubicsY();
 						accelerationFrame += 1;
 					}
 
@@ -698,6 +877,7 @@
 					} catch {}
 				}
 			}
+			
 			
 			
 			
@@ -983,6 +1163,25 @@
 							dvd.style.color = "#" + darkxmas + "FF" + darkxmas;
 							break;
 					}
+				} 
+				else if(today.getMonth() + 1 == 7 && today.getDate() <= 15)
+				{
+					// July 4th
+					var darkmurica = Math.floor(randomBetween(0,8)).toString();
+					darkmurica += Math.floor(randomBetween(0,16)).toString(16);
+					switch(Math.floor(randomBetween(0,3))){
+						case 0:
+							var whitemurica = Math.floor(randomBetween(8,16)).toString(16);
+							whitemurica = whitemurica.padStart(6,whitemurica);
+							dvd.style.color = "#" + whitemurica;
+							break;
+						case 1:
+							dvd.style.color = "#FF" + darkmurica + darkmurica;
+							break;
+						default:
+							dvd.style.color = "#" + darkmurica + darkmurica + "FF";
+							break;
+					}
 				} else {
 					// Random
 					if(pastelOnly) dvd.style.color = getNewRandomColorHSL(80);
@@ -1040,6 +1239,10 @@
 			}
 			
 			function changeFuncGroup(preset){
+				
+				bg.style.top = 0;
+				bg.style.left = 0;
+
 				if(min!=59) {
 					let oldgroup = funcGroup;
 					let newgroup = preset;
@@ -1054,11 +1257,19 @@
 					//console.log(newgroup + " " + preset);
 					funcGroup = newgroup;
 					firstRun=true;
-					bg.style.animation = 'none';
-					bg.offsetHeight; /* trigger reflow */
-					dvd.style.animation = 'none';
-					dvd.offsetHeight; /* trigger reflow */
+					
 				}
+
+				bg.style.transform = "none";
+				dvd.style.transform = "none";
+				bg.style.transform = "translateX(0px) rotate(0deg)"; // Reset and position
+    			bg.style.left = x + "px"; // Set left position
+
+				bg.style.animation = 'none';
+				bg.offsetHeight; /* trigger reflow */
+				
+				dvd.style.animation = 'none';
+				dvd.offsetHeight; /* trigger reflow */
 				
 				waitBeforeNextBounce = Math.random() < 0.5;
 				
@@ -1152,6 +1363,9 @@
 							case 10:
 								updateDVDAnimationFunction10(dvd);
 								break;
+							case 11:
+								updateDVDAnimationFunction11(dvd);
+								break;
 							
 						}
 						dvd.offsetHeight; /* trigger reflow */
@@ -1187,6 +1401,9 @@
 							case 10:
 								updateBGAnimationFunction10(bg);
 								break;
+							case 11:
+								updateBGAnimationFunction11(bg);
+								break;
 						}
 						bg.offsetHeight; /* trigger reflow */
 					}
@@ -1204,6 +1421,7 @@
 				gravityWell = false;
 				doAccelleration = false;
 				useSineWaveOffset = false;
+				useCubicAcceleration = false;
 				
 				// at the top of any minute,
 				if(sec==0 || firstRun){
@@ -1234,6 +1452,7 @@
 				gravityWell = false;
 				doAccelleration = false;
 				useSineWaveOffset = false;
+				useCubicAcceleration = false;
 				
 				// at the top of any minute,
 				if(sec==0 || firstRun){
@@ -1264,6 +1483,7 @@
 				movementType = "RANDOM";
 				doAnimationOnRePosition = true;
 				useSineWaveOffset = false;
+				useCubicAcceleration = false;
 			}
 			
 			// Rotates around the screen in different patterns in synch with another element inversing it
@@ -1275,6 +1495,7 @@
 				gravityWell = false;
 				doAccelleration = false;
 				useSineWaveOffset = false;
+				useCubicAcceleration = false;
 				
 				if(min%2==0)
 					movementType = "DVD";
@@ -1305,6 +1526,7 @@
 				aimForCorners = true;
 				doAccelleration = false;
 				useSineWaveOffset = false;
+				useCubicAcceleration = false;
 				
 				ele.style.animation = 'none';
 				// at the top of any minute,
@@ -1334,7 +1556,6 @@
 			// RANDOM
 			function updateDVDAnimationFunction6(ele){
 				movementType = "DVD";
-				useSineWaveOffset = false;
 
 				// at the top of any minute,
 				if(sec==0 || firstRun){
@@ -1391,6 +1612,14 @@
 							break;
 						default:
 							useSineWaveOffset = true;
+							break;
+					}
+					switch(Math.floor(randomBetween(0,2))){
+						case 0:
+							useCubicAcceleration = false;
+							break;
+						default:
+							useCubicAcceleration = true;
 							break;
 					}
 					switch(Math.floor(randomBetween(0,2))){
@@ -1496,6 +1725,7 @@
 				aimForCorners = false;
 				doAccelleration = false;
 				useSineWaveOffset = false;
+				useCubicAcceleration = false;
 				switch(min%4){
 					case 0:
 						edgesGoFastInstead = false;
@@ -1525,6 +1755,7 @@
 				gravityWell = false;
 				doAccelleration = true;
 				useSineWaveOffset = false;
+				useCubicAcceleration = false;
 				
 				// at the top of any minute,
 				//if(sec==0 || firstRun){
@@ -1547,6 +1778,7 @@
 			function updateDVDAnimationFunction9(ele){
 				movementType = "DVD";
 				useSineWaveOffset = false;
+				useCubicAcceleration = false;
 				
 				// at the top of any minute,
 				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
@@ -1600,7 +1832,6 @@
 			function updateDVDAnimationFunction10(ele){
 				movementType = "DVD";
 
-				oneInThisChanceOfChanging = 10000000;
 				useSineWaveOffset = true;
 
 				speedUpFasterFromEdges = false;
@@ -1609,9 +1840,8 @@
 				aimForCorners = false;
 				speedUpFasterFromEdges = false;
 				waitBeforeNextBounce = false;
-				
+				useCubicAcceleration = min>30&&(min-2)%10<=3;
 				doAccelleration = min%10>=5;
-				
 				
 				// if(sec==0 || firstRun){
 				// 	if(min<45){
@@ -1623,11 +1853,26 @@
 				// 	}
 				// }
 				
-				if(min>30 && (sec%4==0 || firstRun)){
+				if(min>50 && (sec%5==0 || firstRun)){
 					dvd.style.animation = 'none'; 
 					dvd.offsetHeight; /* trigger reflow */
-					dvd.style.animation = 'flyzoom 2s cubic-bezier(' + Math.random() + ',' + randomBetween(-1.5,1.5) + ',' + Math.random() + ',' + randomBetween(-1.5,1.5) + ') infinite alternate';
+					dvd.style.animation = 'flyzoom 4s cubic-bezier(' + Math.random() + ',' + randomBetween(-1.5,1.5) + ',' + Math.random() + ',' + randomBetween(-1.5,1.5) + ') infinite alternate';
 				}
+			}
+
+			function updateDVDAnimationFunction11(ele){
+				movementType = "DVD";
+
+				useSineWaveOffset = false;
+
+				speedUpFasterFromEdges = false;
+				edgesGoFastInstead = false;
+				gravityWell = false;
+				aimForCorners = false;
+				speedUpFasterFromEdges = false;
+				waitBeforeNextBounce = false;
+				doAccelleration = false;
+				useCubicAcceleration = true;
 			}
 			
 			
@@ -1858,8 +2103,32 @@
 			function updateBGAnimationFunction10(ele){
 				
 			}
+
+			function updateBGAnimationFunction11(ele){
+				
+			}
+
+			window.onkeyup = keyup;
+			function keyup(event)
+			{   
+				if(event.keyCode == 19)
+				{
+					event.preventDefault();
+					event.stopPropagation();
+					if(!debugmode){
+						bg.style.border = "4px solid #00CCFF";
+						dvd.style.border = "2px solid red";
+						bh.style.border = "2px solid green";
+					} else {
+						bg.style.border = "none";
+						dvd.style.border = "none";
+						bh.style.border = "none";
+					}
+					debugmode = !debugmode;
+				}
+			}
 			
-			changeFuncGroup(10);
+			changeFuncGroup(11);
 			// Start the animation's first frame
 			window.requestAnimationFrame(animate);
 		</script>
