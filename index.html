@@ -408,6 +408,7 @@
 				drunkardC = 0.1,
 				drunkardD = 0.1,
 				drunkardFactor = 25,
+				drunkardFunction = "",
 				
 				movementType = "DVD",
 				oneInThisChanceOfChanging = 250,
@@ -513,6 +514,9 @@
 				let retvalue = 1.0;
 				
 				switch(wavefunc){
+					case 0:
+						retvalue = speed*amplify*Math.sin(val/stretch)-stretch;
+						break;
 					case 1:
 						retvalue = speed*amplify*Math.sin((val - Math.sin(val))/stretch);
 						break;
@@ -592,8 +596,8 @@
 					sineXAmplify = randomBetween(sineAmplifyMin, sineAmplifyMax);
 					sineYAmplify = randomBetween(sineAmplifyMin, sineAmplifyMax);
 
-					sineXFunction = Math.floor(randomBetween(-5,5));
-					sineYFunction = Math.floor(randomBetween(-5,5));
+					sineXFunction = Math.floor(randomBetween(0,22));
+					sineYFunction = Math.floor(randomBetween(0,22));
 
 					updateCubicsX();
 					updateCubicsY();
@@ -608,11 +612,11 @@
 					} else {
 						speedX = getSpeedFactorXY(speedfactor);
 						speedY = getSpeedFactorXY(speedfactor);
-						if(useSineWaveOffset){
+						if(useSineWaveOffset && doAccelleration){
 							//speedX = CalculateCustomSine(randomBetween(0,2), randomBetween(0,2),speedX,speedX,sineSpeedXFunction); // too chaotic
 							//speedY = CalculateCustomSine(randomBetween(0,2), randomBetween(0,2),speedY,speedY,sineSpeedYFunction); // too chaotic
-							speedX += (Math.sin(speedX)*sineXFunction)
-							speedY += (Math.cos(speedY)*sineYFunction)
+							speedX += (Math.sin(speedX)*Math.floor(randomBetween(-5,5)))
+							speedY += (Math.cos(speedY)*Math.floor(randomBetween(-5,5)))
 						}
 						if(speedUpFasterFromEdges){
 							speedX/=2.0;
@@ -651,7 +655,6 @@
 				//dvd.innerText = "Merry Christmas!";	
 
 				pickCSSAnimation("dvd", funcGroup);
-				
 				if(min==59 || movementType == "CENTER"){
 					x = (screenWidth-dvd.clientWidth)/2;
 					y = (screenHeight/2-dvd.clientHeight*6);
@@ -659,8 +662,10 @@
 					
 					dvd.style.left = x + "px";
 					dvd.style.top = y + "px";
+					dvd.style.maxWidth = "";
 				} else if(movementType == "DVD"){
 					dvd.style.display = "table-row";
+					dvd.style.maxWidth = "400px";
 					
 					// Don't let us clip off the X axis edges of the screen
 					if (x + dvd.clientWidth >= screenWidth || x < 0) {
@@ -846,6 +851,7 @@
 					dvd.style.left = x + "px";
 					dvd.style.top = y + "px";
 				} else if (movementType == "RANDOM"){
+					dvd.style.maxWidth = "400px";
 					try {
 						dvd.style.display = "inline-block";
 						// set in CSS block to propagate down
@@ -1873,6 +1879,32 @@
 				waitBeforeNextBounce = false;
 				doAccelleration = false;
 				useCubicAcceleration = true;
+
+				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
+					if(drunkardReset){
+						drunkardA = Math.round(Math.random()*1000)/1000;
+						drunkardB = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
+						drunkardC = Math.round(Math.random()*1000)/1000;
+						drunkardD = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
+						switch(Math.round(randomBetween(0,min/15.0))){
+							case 0:
+								drunkardFunction = "drunkard "
+								break;
+							case 1:
+								drunkardFunction = "wiggle "
+								break;
+							case 2:
+								drunkardFunction = "rotation "
+								break;
+							case 3:
+								drunkardFunction = "annoyingrotation "
+								break;
+						}
+						
+						ele.style.animation = drunkardFunction + ((60-min+5)) + 's cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ') infinite reverse';
+						drunkardReset = false;
+					}
+				}
 			}
 			
 			
@@ -2105,7 +2137,37 @@
 			}
 
 			function updateBGAnimationFunction11(ele){
-				
+				// at the top of any minute,
+				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
+					if(drunkardReset)
+					{
+						drunkardA = Math.round(Math.random()*1000)/1000;
+						drunkardB = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
+						drunkardC = Math.round(Math.random()*1000)/1000;
+						drunkardD = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
+						
+						switch(Math.round(randomBetween(0,min/15.0))){
+							case 0:
+								drunkardFunction = "drunkard "
+								break;
+							case 1:
+								drunkardFunction = "wiggle "
+								break;
+							case 2:
+								drunkardFunction = "rotation "
+								break;
+							case 3:
+								drunkardFunction = "annoyingrotation "
+								break;
+						}
+						
+						ele.style.animation = drunkardFunction + ((60-min+5)) + 's cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ') infinite reverse';
+					}
+				}
+				else 
+				{
+					drunkardReset = true;
+				}
 			}
 
 			window.onkeyup = keyup;
@@ -2128,7 +2190,7 @@
 				}
 			}
 			
-			changeFuncGroup(11);
+			changeFuncGroup(10);
 			// Start the animation's first frame
 			window.requestAnimationFrame(animate);
 		</script>
