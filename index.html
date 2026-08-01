@@ -1,11 +1,14 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
-	  
+
 		<title>Bouncing Clock</title>
-		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
 		<style>
+			html {
+				overflow: hidden;
+			}
+
 			body {
 				margin: 0;
 				box-sizing: border-box;
@@ -20,60 +23,49 @@
 				width: calc(100% - 6px);
 				z-index: 500;
 			}
-			
-			#dvdContainer{
 
-				display: table;
-			}
-			
-			#blackhole {
+			.blackhole, #dvd, .dvd-ghost {
 				position: fixed;
-				background-color:#000;
 				z-index: 500;
-				
+
 				margin:0px;
 				padding:0px;
-				
+
 				display: table-row;
+
+				white-space: nowrap;
+				background-repeat: no-repeat;
+				background-size: 75px;
+				background-position: center;
+				font-size: 60px;
+
+				text-align: center;
+			}
+
+			.blackhole {
+				background-color:#000;
 				height:1px;
 				width:1px;
-				
-				
-				white-space: nowrap;
-				background-repeat: no-repeat;
-				background-size: 75px;
-				background-position: center;
-				font-size: 60px;
-				
-				
-				text-align: center;
 			}
 
-			#dvd {
-				position: fixed;
+			#dvd, .dvd-ghost {
 				color:#fff;
-				z-index: 500;
-				
-				margin:0px;
-				padding:0px;
-				
-				display: table-row;
+				align-items: center;
 				height:5px;
-				
-				
 				min-width: 200px;
 				max-width: 400px;
-				white-space: nowrap;
-				background-repeat: no-repeat;
-				background-size: 75px;
-				background-position: center;
-				font-size: 60px;
-				
-				
-				text-align: center;
-				animation: zoomy 2s linear infinite alternate, wiggle .2s cubic-bezier(.6, .8, .4, .2) infinite
 			}
-			
+
+			#hitbox {
+				position: fixed;
+				z-index: 501;
+				margin: 0px;
+				padding: 0px;
+				box-sizing: border-box;
+				pointer-events: none;
+				display: none;
+			}
+
 			#day {
 				position: absolute;
 				color: #555;
@@ -85,45 +77,31 @@
 				opacity: 0;
 				animation: backgroundColorPalette 5s linear;
 			}
-			
+
 			/* The snackbar - position it at the bottom and in the middle of the screen */
 			#snackbar {
 			  visibility: hidden; /* Hidden by default. Visible on click */
-			  background-color: #333; /* Black background color */
-			  color: #fff; /* White text color */
-			  text-align: center; /* Centered text */
-			  border-radius: 2px; /* Rounded borders */
-			  padding: 16px; /* Padding */
-			  position: fixed; /* Sit on top of the screen */
-			  z-index: 1; /* Add a z-index if needed */
-			  bottom: 30px; /* 30px from the bottom */
+			  background-color: #333;
+			  color: #fff;
+			  text-align: center;
+			  border-radius: 2px;
+			  padding: 16px;
+			  position: fixed;
+			  z-index: 1;
+			  bottom: 30px;
 			  left: 50%;
 			  transform: translateX(-50%);
 			}
 
-			/* Show the snackbar when clicking on a button (class added with JavaScript) */
+			/* Show the snackbar when the preset changes (class added with JavaScript) */
 			#snackbar.show {
-			  visibility: visible; /* Show the snackbar */
-			  /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
-			  However, delay the fade out process for 2.5 seconds */
-			  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+			  visibility: visible;
 			  animation: fadein 0.5s, fadeout 0.5s 2.5s;
-			}
-
-			/* Animations to fade the snackbar in and out */
-			@-webkit-keyframes fadein {
-			  from {bottom: 0; opacity: 0;}
-			  to {bottom: 30px; opacity: 1;}
 			}
 
 			@keyframes fadein {
 			  from {bottom: 0; opacity: 0;}
 			  to {bottom: 30px; opacity: 1;}
-			}
-
-			@-webkit-keyframes fadeout {
-			  from {bottom: 30px; opacity: 1;}
-			  to {bottom: 0; opacity: 0;}
 			}
 
 			@keyframes fadeout {
@@ -132,1008 +110,301 @@
 			}
 
 			@keyframes backgroundColorPalette {
-				0% {
-					opacity: 0;
-				}
-				25% {
-					opacity: 1;
-				}
-				50% {
-					opacity: 0;
-				}
-				100% {
-					opacity: 0;
-				}
+				0% { opacity: 0; }
+				25% { opacity: 1; }
+				50% { opacity: 0; }
+				100% { opacity: 0; }
 			}
-			
+
 			@keyframes zoom {
-				0% { 
-					font-size: 0px;
-				}
-				50% {
-					font-size: 75px;
-				}
-				100% { 
-					font-size: 0px;
-				} 
+				0% { font-size: 0px; }
+				50% { font-size: 75px; }
+				100% { font-size: 0px; }
 			}
 
 			@keyframes flyzoom {
-				0% { 
-					font-size: 30px;
-				}
-				50% {
-					font-size: 70px;
-				}
-				100% { 
-					font-size: 30px;
-				} 
-			}
-			
-			@keyframes bigzoom { 
-				0% { 
-					font-size: 1px;
-				} 
-				100% { 
-					font-size: 225px;
-				} 
-			}
-			
-			@keyframes zoomy { 
-				0% { 
-					font-size: 40px;
-				} 
-				50% { 
-					font-size: 75px;
-				}
-				100% { 
-					font-size: 40px;
-				} 
-			}
-			
-			@keyframes rotation { 
-				0% { 
-					transform: rotate(330deg);
-				} 
-				50% { 
-					transform: rotate(390deg);
-				}
-				100% { 
-					transform: rotate(330deg);
-				} 
-			}
-			
-			@keyframes annoyingrotation { 
-				0% { 
-					transform: rotate(0deg);
-				} 
-				50% { 
-					transform: rotate(-720deg);
-				}
-				100% { 
-					transform: rotate(0deg);
-				} 
-			}
-			
-			@keyframes inverseannoyingrotation { 
-				0% { 
-					transform: rotate(0deg);
-				} 
-				50% { 
-					transform: rotate(720deg);
-				}
-				100% { 
-					transform: rotate(0deg);
-				} 
-			}
-			
-			@keyframes wiggle { 
-				0% { 
-					transform: rotate(350deg);
-				} 
-				50% { 
-					transform: rotate(370deg);
-				}
-				100% { 
-					transform: rotate(350deg);
-				} 
+				0% { font-size: 30px; }
+				50% { font-size: 70px; }
+				100% { font-size: 30px; }
 			}
 
-			@keyframes drunkard { 
-				0% { 
-					transform: rotate(355deg);
-				} 
-				50% {
-					transform: rotate(365deg);
-				}
-				100% { 
-					transform: rotate(355deg);
-				} 
+			@keyframes bigzoom {
+				0% { transform: scale(0.01); }
+				100% { transform: scale(4.5); }
 			}
 
-			@keyframes inversedrunkard { 
-				0% { 
-					transform: rotate(365deg);
-				}
-				50% {
-					transform: rotate(355deg);
-				}
-				100% { 
-					transform: rotate(365deg);
-				} 
+			@keyframes zoomy {
+				0% { font-size: 40px; }
+				50% { font-size: 75px; }
+				100% { font-size: 40px; }
 			}
-			
+
+			@keyframes rotation {
+				0% { transform: rotate(330deg); }
+				50% { transform: rotate(390deg); }
+				100% { transform: rotate(330deg); }
+			}
+
+			@keyframes annoyingrotation {
+				0% { transform: rotate(0deg); }
+				50% { transform: rotate(-720deg); }
+				100% { transform: rotate(0deg); }
+			}
+
+			@keyframes inverseannoyingrotation {
+				0% { transform: rotate(0deg); }
+				50% { transform: rotate(720deg); }
+				100% { transform: rotate(0deg); }
+			}
+
+			@keyframes wiggle {
+				0% { transform: rotate(350deg); }
+				50% { transform: rotate(370deg); }
+				100% { transform: rotate(350deg); }
+			}
+
+			@keyframes drunkard {
+				0% { transform: rotate(355deg); }
+				50% { transform: rotate(365deg); }
+				100% { transform: rotate(355deg); }
+			}
+
+			@keyframes inversedrunkard {
+				0% { transform: rotate(365deg); }
+				50% { transform: rotate(355deg); }
+				100% { transform: rotate(365deg); }
+			}
+
 			@keyframes rot1 {
-				0%{
-					transform: rotate(var(--from-rot));
-				}
-				50%{
-					transform: rotate(var(--to-rot));
-				}
-				100%{
-					transform: rotate(var(--from-rot));
-				}
+				0%   { transform: rotate(var(--from-rot)); }
+				50%  { transform: rotate(var(--to-rot)); }
+				100% { transform: rotate(var(--from-rot)); }
 			}
-			
+
 			@keyframes rot1p {
-				0%{
-					transform: rotate(var(--to-rot));
-				}
-				50%{
-					transform: rotate(var(--from-rot));
-				}
-				100%{
-					transform: rotate(var(--to-rot));
-				}
+				0%   { transform: rotate(var(--to-rot)); }
+				50%  { transform: rotate(var(--from-rot)); }
+				100% { transform: rotate(var(--to-rot)); }
 			}
-			
-			
 		</style>
 	</head>
 
 	<body translate="no" id="bod">
 		<div id="black">
-			<h2 id="dvd">TIMESTAMP</h1>
+			<h2 id="dvd">TIMESTAMP</h2>
 		</div>
+		<h2 id="dvdGhostX" class="dvd-ghost" style="display:none"></h2>
+		<h2 id="dvdGhostY" class="dvd-ghost" style="display:none"></h2>
 		<span id="day">DATE</span>
-		<div id="snackbar">Some text some message..</div>
-		<div id="blackhole">&nbsp;</div>
-		
-		<!-- Positioning Logic -->
+		<div id="snackbar"></div>
+		<div id="hitbox"></div>
+
+		<!-- Engine: clock/date state, the reusable Mover, and the frame loop -->
 		<script>
-			// Elements positions, directions and speeds
-			const maxRandomChange = 5000,
-			      minRandomChange = 100,
-				  debug = true,
-				  presets = ["DVD logo...?", 
-				             "Whip it", 
-							 "Zoomies", 
-							 "Speen", 
-				             "Corner Shot!", 
-							 "Random", 
-							 "DVD logo... But With Acceleration!", 
-							 "Accelerate!",
-							 "Medical Emergency",
-							 "Fly in a Jar",
-							 "Two Shots of Vodka"];
-				  
-			let x = 0,
-				y = 0,
-				dirX = 1,
-				dirY = 1,
-				minspeed = .2,
-				speedfactor = 50.1,
-				speedX = 1.1,
-				speedY = 1.1,
-				speedBoost=10.0,
-				speedBoostFastest = 10.0,
-				speedBoostSlowest = 100.0,
-				screenHeight = 0,
-				screenWidth = 0,
-				corner = 0,
-				isBounceFrame = 1,
-				debugmode = false,
+			const dvd   = document.getElementById("dvd"),
+			      day   = document.getElementById("day"),
+			      bg    = document.getElementById("black"),
+			      snack = document.getElementById("snackbar"),
+			      hitbox = document.getElementById("hitbox"),
+			      dvdGhostX = document.getElementById("dvdGhostX"),
+			      dvdGhostY = document.getElementById("dvdGhostY");
 
-				sineStretchMin = 10.0,
-				sineStretchMax = 250.0,
-				sineAmplifyMin = 1,
-				sineAmplifyMax = 5.0,
+			const PRESETS = ["Random",
+			                 "DVD logo...?",
+			                 "Whip it",
+			                 "Zoomies",
+			                 "Speen",
+			                 "Corner Shot!",
+			                 "DVD logo... But With Acceleration!",
+			                 "Accelerate!",
+			                 "Medical Emergency",
+			                 "Fly in a Jar",
+			                 "Two Shots of Vodka",
+			                 "Speeding Trap Ahead",
+			                 "Moth to a Flame",
+			                 "Spaghettification",
+			                 "Restraining Order",
+			                 "White Hole",
+			                 "Sir Wobbleton's Trigonometric Gravy Roulette",
+			                 "Sugar Rush",
+			                 "Frenemies",
+			                 "Repulsive"];
 
-				sineFrame = 0,
-				sineXStretch = 100.0,
-				sineYStretch = 100.0,
-				sineXAmplify = 2.0,
-				sineYAmplify = 2.0,
-				sineSpeedXFunction = 1,
-				sineSpeedYFunction = 1,
-				sineXFunction = 1,
-				sineYFunction = 1,
+			// Physics feature flags. The preset functions flip these; every Mover reads them.
+			const fx = {
+				aimForCorners: false,
+				edgesGoFastInstead: false,
+				speedUpFasterFromEdges: false,
+				gravityWell: false,
+				doAcceleration: false,
+				doDeceleration: false,
+				useSineWaveOffset: false,
+				useCubicAcceleration: true,
+				waitBeforeNextBounce: false,
+				pullTowardBH: "",            // "" | "thrust" | "gravity" | "shove" | "whitehole"
+				trigChase: false,            // reroll pullTowardBH at every wall, and wobble the pull
+				pastelOnly: false,
+				chaseAccelMul: 1,            // scales both the pull and its cap; 1 = normal chase() strength
+				chaseAccelRandom: false,     // reroll chaseAccelMul 1x-10x on every wall bounce
+				repulsive: false,            // hole always attracts, whoever isn't the hole always flees
+				// Wrap replaces the bounce on that axis alone; deliberately NOT in NO_MOTION so a
+				// preset's per-second setFX(NO_MOTION) reroll can't silently turn it back off.
+				wrapX: false, wrapY: false,
+			};
+			const BH_MODES = ["thrust", "gravity", "shove", "whitehole"];
+			// Gravity slingshots: one close pass spends hundreds of frames near max pull and comes
+			// out pinned at BH_MAX_SPEED, and a central force plus a restitution centered on 1.0
+			// never takes that back. So bleed it off, but only the part above cruising speed. A
+			// flat drag can't work here: far from the hole the pull is ~0 and a universal bleed
+			// grinds the clock to a dead 0.3 px/frame crawl. This leaves ordinary motion alone and
+			// only eats the launches. Gravity only; the white hole doesn't slingshot to begin with.
+			const BH_DRAG = { gravity: 0.03 }, BH_ROULETTE_DRAG = 0.03,
+			      BH_CRUISE = 6, BH_MAX_DRAG = 0.5, BH_MAX_ACCEL = 8;
+			// Spread this in a preset to clear every motion flag, then turn on what you want.
+			const NO_MOTION = {
+				aimForCorners: false, edgesGoFastInstead: false, speedUpFasterFromEdges: false,
+				gravityWell: false, doAcceleration: false, doDeceleration: false,
+				useSineWaveOffset: false, useCubicAcceleration: false, pullTowardBH: "", trigChase: false,
+				chaseAccelMul: 1, chaseAccelRandom: false, repulsive: false,
+			};
+			const setFX = o => Object.assign(fx, o);
 
-				accelerationFrame = 0,
-				framesUntilNextBounce = 0,
-				framesUntilNextBounceMin = 0,
-				framesUntilNextBounceMax = 100,
-				
-				useCubicAcceleration = true,
-				cubicX1 = 1,
-				cubicX2 = 1,
-				cubicY1 = 1,
-				cubicY2 = 1,
-				cubicXMul = 1.0,
-				cubicYMul = 1.0,
-				negateCubicX = true,
-				negateCubicY = true,
-				invertCubicX = true,
-				invertCubicY = true,
-				cubicXFrames = 1,
-				cubicYFrames = 1,
-				cubicMinMultiplier = 1,
-				cubicMaxMultiplier = 10,
-				cubicMinFrames = 100,
-				cubicMaxFrames = 2000,
-				accelerationOffset = 1,
-				accelerationMultiplier = .1,
-				
-				bh_x = 10000,
-				bh_y = 10000,
-				bh_dirX = -1,
-				bh_dirY = -1,
-				bh_speedX = 1.1,
-				bh_speedY = 1.1,
-				bh_speedfactor = 1.1,
-				bh_speedBoostFastest = 1.0,
-				bh_speedBoostSlowest = 1.0,
-				bh_speedBoost = 1.0,
-				grav = 50,
-				dvd_interacts_with_bh = false,
-				invert_attraction = false,
-				startCountingDown = false,
-				
-				firstFrameOfHour = true,
-				firstRun = true,
-				funcGroup = 1,
-				isMouseHover = false,
-				min = 0,
-				sec = 0,
-				lastSecond = 0,
-				
-				doReposition=true,
-				fadetimersynch = -1,
-				repositionInterval = 5,
-				nextRepositionSecond = 0,
-				
-				drunkardReset = true,
-				drunkardA = 0.1,
-				drunkardB = 0.1,
-				drunkardC = 0.1,
-				drunkardD = 0.1,
-				drunkardFactor = 25,
-				drunkardFunction = "",
-				
-				movementType = "DVD",
-				oneInThisChanceOfChanging = 250,
-				doAnimationOnRePosition = false,
-				
-				aimForCorners = false,
-				edgesGoFastInstead = false,
-				speedUpFasterFromEdges = false,
-				gravityWell = false,
-				waitBeforeNextBounce = false,
-				doAccelleration = false,
-				doJumpyAcceleration = false,
-				pastelOnly = false,
-				
-				gate4 = true,
-				bg6synch=0,
-				a2=0,
-			    b2=0,
-				c2=0,
-				d2=0;
+			// Frame/clock state
+			let min = 0, sec = 0, lastSecond = -1, tick = true,
+			    screenWidth = 0, screenHeight = 0,
+			    firstRun = true, firstFrameOfHour = true,
+			    funcGroup = 1,
+			    movementType = "DVD",
+			    holeMode = "DVD", holeJumpEvery = 5,
+			    holeZoomiesMs = 0, lastHoleTeleport = 0,   // 0 = normal per-second Zoomies cadence
+			    isMouseHover = false,
+			    debugmode = false,
+			    doReposition = true, doAnimationOnRePosition = false,
+			    repositionInterval = 5, nextRepositionSecond = 0, fadetimersynch = -1,
+			    drunkardReset = true, drunkardFunction = "",
+			    drunkardA = 0.1, drunkardB = 0.1, drunkardC = 0.1, drunkardD = 0.1,
+			    drunkardFactor = 25,
+			    bg6synch = 0,
+			    a2 = 0, b2 = 0, c2 = 0, d2 = 0;
 
-			// Elements to be manipulated
-			let dvd = document.getElementById("dvd");
-			let day = document.getElementById("day");
-			let bg = document.getElementById("black");
-			let bh = document.getElementById("blackhole");
-			
-			function updateGlobalVariables(){
-				min = parseInt(getDate().getMinutes());
-				sec = parseInt(getDate().getSeconds());
+			// Tuning knobs
+			const MIN_SPEED = 0.2,
+			      SINE_STRETCH_MIN = 10.0, SINE_STRETCH_MAX = 250.0,
+			      SINE_AMPLIFY_MIN = 1.0,  SINE_AMPLIFY_MAX = 5.0,
+			      CUBIC_MIN_MUL = 1, CUBIC_MAX_MUL = 10,
+			      CUBIC_MIN_FRAMES = 100, CUBIC_MAX_FRAMES = 2000,
+			      ACCEL_OFFSET = 1, ACCEL_MULTIPLIER = 0.1,
+			      DECEL_MULTIPLIER = 0.25,
+			      BOUNCE_WAIT_MIN = 0, BOUNCE_WAIT_MAX = 100,
+			      // Black hole chase, all in px/frame. THRUST never lets up, hence the overshoot.
+			      BH_THRUST = 0.05, BH_MASS = 2000, BH_MAX_PULL = 2.0, BH_MAX_SPEED = 30,
+			      // The chase multiplier rides the minute hand: sedate at :00, vicious at :59.
+			      BH_MUL_AT_00 = 0.25, BH_MUL_AT_59 = 3.0, BH_MUL_JITTER = 0.25,
+			      // Raw power on top of that, rerolled with it. 3x was the old fixed setting.
+			      BH_POWER_MIN = 0.25, BH_POWER_MAX = 1.5,
+			      // ...scaled by how far the hole is when the roll happens: sitting on top of it
+			      // means a gentle push, a full screen diagonal away means a hard run at it.
+			      BH_FAR_NEAR = 0.75, BH_FAR_AWAY = 1.5,
+			      // Restitution: >1 means the wall can kick it back harder than it arrived.
+			      // Centered on 1.0 on purpose. The pull is a central force and adds no energy,
+			      // so a mean below 1 drains the system every wall until the hole captures it.
+			      BH_BOUNCE_MIN = 0.75, BH_BOUNCE_MAX = 1.25,
+			      // ...but thrust and shove are NOT central forces. They never let up, so they
+			      // pump energy in every pass and a mean of 1.0 pins the clock at BH_MAX_SPEED.
+			      // These walls have to take some back.
+			      BH_THRUST_BOUNCE_MIN = 0.45, BH_THRUST_BOUNCE_MAX = 0.9,
+			      // Ceiling on the trig-driven chase multiplier. Draws are normalized by their mean
+			      // level, not their crest: what reads on screen is the typical frame, and dividing
+			      // by the peak buried every shape that spikes. That's what "not enough" looked like.
+			      // Tuned by measurement, not arithmetic: clamping the crests trims the mean back,
+			      // and by how much depends on the draw. These land the typical pull around 6-8,
+			      // against the flat 3.0 the old clamp pinned it at. MAX is the knob; it scales
+			      // the whole thing linearly.
+			      TRIG_WOBBLE_MAX = 16, TRIG_TARGET_MEAN = 0.5,
+			      // The same probed wave also steers the position directly, in px/frame at full
+			      // swing, so Wobbleton is trig *motion* on top of a trig-modulated pull instead of
+			      // only the latter. Deliberately under the chase's scale: a wobble on the path.
+			      TRIG_DRIFT = 6,
+			      // Gravity's curve, Wobbleton only. COMPRESS < 1 raises everything below the cap,
+			      // most of all the weak far field; PULL is the ceiling that replaces BH_MAX_PULL.
+			      // Both are deliberately mild: the point is a hole you can feel across the screen,
+			      // not a flat thrust with an inverse-square paint job.
+			      TRIG_GRAV_COMPRESS = 0.75, TRIG_GRAV_PULL = 1.6,
+			      // A wave centered on zero is a shaker, not a force: over a cycle it undoes its own
+			      // pull and the clock ends up jittering with no net relationship to the hole (net
+			      // was 18% of gross, measured; some draws netted ~0). Ride the wave on top of a DC
+			      // bias so there's always attraction underneath. Below 1.0 the deep troughs still
+			      // punch through into genuine reversal, which is the fun part.
+			      TRIG_BIAS = 0.35,
+			      // ...and a shape too spiky to normalize at all gets thrown back. Measured crest
+			      // factor is 1.6-4.5 for every wave here except the tan spike train, which is ~300.
+			      TRIG_MAX_CREST = 8,
+			      // Long enough to cover a full period at the slowest stretch (~2*PI*250 frames).
+			      TRIG_PROBE_FRAMES = 2000, TRIG_DEAD_WAVE = 1e-6,
+			      // A plain mover's own cycle length, in ms. Nothing to do with the hour. Tune to taste.
+			      CYCLE_MS_MIN = 25000, CYCLE_MS_MAX = 90000;
 
-				screenHeight = document.body.clientHeight;
-				screenWidth = document.body.clientWidth;
-				doAnimationOnRePosition = false;
-				
-				// once we have more animations, we can randomize what they get every hour!
-				if(sec==0 && min==0){
-					if(firstFrameOfHour){
-						firstRun = true;
-						changeFuncGroup(0);
-						firstFrameOfHour = false; // for the love of all things that are holy just run once
+			/* ---------- tiny helpers ---------- */
 
-						// Hopefully this fixes a bug, we'll see.
-						bg.style.top = 0;
-						bg.style.left = 0;
-						
-						switch(Math.floor(randomBetween(0,2))){
-							case 0:
-								waitBeforeNextBounce = true;
-								break;
-							default:
-								waitBeforeNextBounce = false;
-								break;
-						}
-					}
-				} else {
-					firstFrameOfHour = true;
-				}
+			// NB: args read (max, min) at every call site. Range is the same either way.
+			const randomBetween = (max, min) => Math.random() * (max - min) + min;
+			const coin = () => Math.floor(randomBetween(0, 2)) == 0;
+			const randomItem = arr => arr[Math.floor(Math.random() * arr.length)];
+			const randomSpeed = sf => MIN_SPEED + sf * Math.random();
+			// Constant-force modes get a lossy wall; the inverse-square ones don't need it.
+			const restitutionRange = () => (fx.pullTowardBH == "thrust" || fx.pullTowardBH == "shove")
+				? [BH_THRUST_BOUNCE_MIN, BH_THRUST_BOUNCE_MAX]
+				: [BH_BOUNCE_MIN, BH_BOUNCE_MAX];
 
-				// if(debug){
-				// 	oneInThisChanceOfChanging=100000000;
-				// 	changeFuncGroup(10);
-				// }
-
-				if (startCountingDown) {
-					framesUntilNextBounce--;
-					if(framesUntilNextBounce < 0) {
-						framesUntilNextBounce = 0;
-						startCountingDown = false;
-						updateSpeedFactors("dvd");
-						framesUntilNextBounce = Math.floor(randomBetween(framesUntilNextBounceMin, framesUntilNextBounceMax));
-					}
-				}
-
-				// Every 5 minutes, re-assess some stuff to change
-				if((min%5==0 && sec==0)||firstRun){
-					oneInThisChanceOfChanging = Math.floor(Math.random()*maxRandomChange-minRandomChange)+minRandomChange;
-					getFonts(dvd);
-					getFonts(day);
-				}
+			function getDate(){
+				return new Date();
 			}
 
-			function Bezier(t , initial , p1, p2, final){
+			function bezier(t, initial, p1, p2, final){
 				return (1 - t) * (1 - t) * (1 - t) * initial
-						+
-						3 * (1 - t) * (1 - t) * t * p1
-						+
-						3 * (1 - t) * t * t * p2
-						+
-						t * t * t * final;
+					+ 3 * (1 - t) * (1 - t) * t * p1
+					+ 3 * (1 - t) * t * t * p2
+					+ t * t * t * final;
 			}
 
-			function CalculateCustomSine(amplify, stretch, val, speed, wavefunc){
-				let wavesec = 0;
-				if (sec == 0) wavesec = 1
-				else wavesec = sec
-
-				if(amplify == 0) amplify = 0.0000000001;
-				if(stretch == 0) stretch = 0.0000000001;
-				if(val == 0) val = 0.0000000001;
-				speed = speed/2.0;
-
-				let retvalue = 1.0;
-				
-				switch(wavefunc){
-					case 0:
-						retvalue = speed*amplify*Math.sin(val/stretch)-stretch;
-						break;
-					case 1:
-						retvalue = speed*amplify*Math.sin((val - Math.sin(val))/stretch);
-						break;
-					case 2:
-						val = val/10.0
-						retvalue = speed*amplify*amplify*Math.sin((val - Math.sin(val/stretch)));
-						break;
-					case 3:
-						val = val/10.0
-						retvalue = speed*amplify*Math.sin((val * Math.sin(val))/stretch);
-						break;
-					case 4:
-						val = val/amplify/amplify
-						retvalue = speed*amplify*amplify*Math.sin((val * Math.sin(val/stretch)));
-						break;
-					case 5:
-						val = val/5.0/amplify
-						retvalue = speed*amplify*Math.sin(val*val/stretch)+Math.sin(val);
-						break;
-					case 6:
-						val = Math.abs(val/(speed*(250.0-speed)));
-						retvalue = speed*amplify*Math.sin(val*val/speed);
-						break;
-					case 7:
-						val = val/10.0/amplify
-						retvalue = speed*Math.sin(val*Math.tan(val)/stretch)/Math.tan(val);
-						break;
-					case 8:
-						retvalue = speed*amplify*Math.sin(val*Math.tan(val/stretch))/Math.tan(val/stretch)/(60-wavesec);
-						break;
-					case 9:
-						val = val/25
-						retvalue = speed*speed*amplify*amplify*Math.sin(val*val/(stretch*stretch*speed*speed))*Math.sin(val)/(60-wavesec);
-						break;
-					case 10:
-						val = val/amplify/stretch
-						retvalue = speed*amplify*amplify*amplify*Math.sin(val*val)*Math.sin(val/stretch);
-						break;
-					default:
-						retvalue = speed*amplify*Math.sin(val/stretch);
-						break;
-				}
-
-				retvalue = retvalue*(0.75+(60-min)/120.0)
-				return retvalue;
+			function stretchedPolyOverExp(t, stretch, skew) {
+				t = t + skew;
+				return (t * t) / (stretch * stretch * Math.pow(Math.E, t / stretch));
 			}
 
-			function updateCubicsX()
-			{
-				cubicXMul = randomBetween(cubicMinMultiplier, cubicMaxMultiplier);
-				cubicXFrames = Math.floor(randomBetween(cubicMinFrames, cubicMaxFrames));
-				cubicX1 = randomBetween(-1.5,1.5);
-				cubicX2 = randomBetween(-1.5,1.5);
-				negateCubicX = Math.floor(randomBetween(0,2)) == 0;
-				invertCubicX = Math.floor(randomBetween(0,2)) == 0;
+			// Wave shapes for the sine offset. Index = wave function id.
+			const SINE_FUNCS = [
+				(a, st, v, sp)     => sp*a*Math.sin(v/st) - st,
+				(a, st, v, sp)     => sp*a*Math.sin((v - Math.sin(v))/st),
+				(a, st, v, sp)     => { v /= 10.0;      return sp*a*a*Math.sin(v - Math.sin(v/st)); },
+				(a, st, v, sp)     => { v /= 10.0;      return sp*a*Math.sin((v * Math.sin(v))/st); },
+				(a, st, v, sp)     => { v /= a*a;       return sp*a*a*Math.sin(v * Math.sin(v/st)); },
+				(a, st, v, sp)     => { v /= 5.0*a;     return sp*a*Math.sin(v*v/st) + Math.sin(v); },
+				(a, st, v, sp)     => { v = Math.abs(v/(sp*(250.0-sp))); return sp*a*Math.sin(v*v/sp); },
+				(a, st, v, sp)     => { v /= 10.0*a;    return sp*Math.sin(v*Math.tan(v)/st)/Math.tan(v); },
+				(a, st, v, sp, ws) => sp*a*Math.sin(v*Math.tan(v/st))/Math.tan(v/st)/(60-ws),
+				(a, st, v, sp, ws) => { v /= 25;        return sp*sp*a*a*Math.sin(v*v/(st*st*sp*sp))*Math.sin(v)/(60-ws); },
+				(a, st, v, sp)     => { v /= a*st;      return sp*a*a*a*Math.sin(v*v)*Math.sin(v/st); },
+				(a, st, v, sp)     => { v /= 2500;      return sp*a*Math.sin((st * v) + Math.sin(v)) + v; },
+				(a, st, v, sp)     => { v /= 2500;      return sp*a*Math.sin((st * v) + Math.cos(v) + v) + v; },
+			];
+			const SINE_DEFAULT = (a, st, v, sp) => sp*a*Math.sin(v/st);
+
+			// wavesec/tempo default to the wall clock; plain movers pass their own so
+			// their wave shape doesn't move in lockstep with the hour.
+			function customSine(amplify, stretch, val, speed, wavefunc, wavesec, tempo){
+				if(wavesec === undefined) wavesec = sec == 0 ? 1 : sec;
+				if(tempo === undefined) tempo = 0.75 + (60 - min)/120.0;
+				if(amplify == 0) amplify = 1e-10;
+				if(stretch == 0) stretch = 1e-10;
+				if(val == 0) val = 1e-10;
+				speed = speed / 2.0;
+
+				const f = SINE_FUNCS[wavefunc] || SINE_DEFAULT;
+				return f(amplify, stretch, val, speed, wavesec) * tempo;
 			}
 
-			function updateCubicsY()
-			{
-				cubicYMul = randomBetween(cubicMinMultiplier, cubicMaxMultiplier);
-				cubicYFrames = Math.floor(randomBetween(cubicMinFrames, cubicMaxFrames));
-				cubicY1 = randomBetween(-1.5,1.5);
-				cubicY2 = randomBetween(-1.5,1.5);
-				negateCubicY = Math.floor(randomBetween(0,2)) == 0;
-				invertCubicY = Math.floor(randomBetween(0,2)) == 0;
-			}
-			
-			// Update the speeds used to calculate the time element's position
-			function updateSpeedFactors(option){
-				isBounceFrame = 1;
-				if(option=="dvd")
-				{
-					accelerationFrame=0;
-					
-					sineXStretch = randomBetween(sineStretchMin, sineStretchMax);
-					sineYStretch = randomBetween(sineStretchMin, sineStretchMax);
-					sineXAmplify = randomBetween(sineAmplifyMin, sineAmplifyMax);
-					sineYAmplify = randomBetween(sineAmplifyMin, sineAmplifyMax);
-
-					sineXFunction = Math.floor(randomBetween(0,22));
-					sineYFunction = Math.floor(randomBetween(0,22));
-
-					updateCubicsX();
-					updateCubicsY();
-
-					updateColor();
-					//updateTextRandomness(); // TODO upside down, mirrored, reversed, etc
-					setNewSpeedFactor();
-					speedBoost = randomBetween(speedBoostFastest, speedBoostSlowest);
-					if(aimForCorners){
-						corner = 0;
-						aimNearCorner();
-					} else {
-						speedX = getSpeedFactorXY(speedfactor);
-						speedY = getSpeedFactorXY(speedfactor);
-						if(useSineWaveOffset && doAccelleration){
-							//speedX = CalculateCustomSine(randomBetween(0,2), randomBetween(0,2),speedX,speedX,sineSpeedXFunction); // too chaotic
-							//speedY = CalculateCustomSine(randomBetween(0,2), randomBetween(0,2),speedY,speedY,sineSpeedYFunction); // too chaotic
-							speedX += (Math.sin(speedX)*Math.floor(randomBetween(-5,5)))
-							speedY += (Math.cos(speedY)*Math.floor(randomBetween(-5,5)))
-						}
-						if(speedUpFasterFromEdges){
-							speedX/=2.0;
-							speedY/=2.0;
-							if(gravityWell){
-								speedX/=10.0;
-								speedY/=10.0;
-							}
-						}
-						
-						if(doAccelleration || doJumpyAcceleration){
-							speedX=speedX*accelerationMultiplier;
-							speedY=speedY*accelerationMultiplier;
-						}
-					}
-					if(speedX == 0)
-						speedX = 0.001
-					if(speedY == 0)
-						speedY = 0.001
-				} else {
-					bh_speedBoost = randomBetween(bh_speedBoostFastest, bh_speedBoostSlowest);
-					//if(aimForCorners){
-					//	corner = 0;
-					//	aimNearCorner();
-					//} else {
-						bh_speedX = getSpeedFactorXY(bh_speedfactor);
-						bh_speedY = getSpeedFactorXY(bh_speedfactor);
-					//}
-				}
-			}
-			
-			// Update the position and display text
-			function updateDVD(){
-				dvd.innerText = getDate().toLocaleTimeString(); // 11:18:48 AM
-
-				//dvd.innerText = "Merry Christmas!";	
-
-				pickCSSAnimation("dvd", funcGroup);
-				if(min==59 || movementType == "CENTER"){
-					x = (screenWidth-dvd.clientWidth)/2;
-					y = (screenHeight/2-dvd.clientHeight*6);
-					if(min==59) updateColor();
-					
-					dvd.style.left = x + "px";
-					dvd.style.top = y + "px";
-					dvd.style.maxWidth = "";
-				} else if(movementType == "DVD"){
-					dvd.style.display = "table-row";
-					dvd.style.maxWidth = "400px";
-					
-					// Don't let us clip off the X axis edges of the screen
-					if (x + dvd.clientWidth >= screenWidth || x < 0) {
-						if(waitBeforeNextBounce) startCountingDown = true;
-						updateSpeedFactors("dvd");
-						dirX *= -1;
-						if(Math.round(0.75*Math.random(),0)==1) dirY *= -1;
-						
-						if(x<0) x=0;
-						else x=screenWidth-1-dvd.clientWidth;
-						
-						if(waitBeforeNextBounce){
-							if(framesUntilNextBounce > 0 && startCountingDown){
-								speedX = 0;
-								speedY = 0;
-							} else {
-								framesUntilNextBounce = Math.floor(randomBetween(framesUntilNextBounceMin, framesUntilNextBounceMax));
-							}
-						}
-					}
-					
-					// Don't let us clip off the Y axis edges of the screen
-					if (y + (11*dvd.clientHeight) >= screenHeight || y < 0) {
-						if(waitBeforeNextBounce) startCountingDown = true;
-						updateSpeedFactors("dvd");
-						dirY *= -1;
-						if(Math.round(0.75*Math.random(),0)==1) dirX *= -1;
-						
-						if(y<0) y=0;
-						else y=screenHeight-1-(11*dvd.clientHeight);
-						
-						if(waitBeforeNextBounce){
-							if(framesUntilNextBounce > 0 && startCountingDown){
-								speedX = 0;
-								speedY = 0;
-							} else {
-								framesUntilNextBounce = Math.floor(randomBetween(framesUntilNextBounceMin, framesUntilNextBounceMax));
-							}
-						}
-					}
-
-					// Jiggle on mouse hover
-					if(isMouseHover){
-						dirY *= -1;
-						dirX *= -1;
-						updateSpeedFactors("dvd");
-					}
-					
-					// Random chance to swap directinos for no reason
-					// TODO, I don't like this on every single one
-					//if(Math.floor(Math.random()*oneInThisChanceOfChanging)==0) dirY *= -1;
-					//if(Math.floor(Math.random()*oneInThisChanceOfChanging)==0) dirX *= -1;
-					
-					// Move the element around
-					let prevX = x, prevY = y;
-					x += dirX * speedX;
-					y += dirY * speedY;
-					
-					if(startCountingDown && waitBeforeNextBounce) return;
-					
-					// If the DVD logo interacts with the invisible black hole object
-					if(dvd_interacts_with_bh){
-						// Find the distance between the DVD logo and the black hole
-						let bh_disX = (x - bh_x);
-						let bh_disY = (y - bh_y);
-						let distance = Math.sqrt(Math.pow(bh_disX, 2) + Math.pow(bh_disY, 2));
-						let angle = Math.atan2(bh_disY, bh_disX);
-						
-						if(distance !== 0){
-							let attractionAcceleration = 9000 / Math.pow(distance,2); //add mass calculation later when mass is variable
-							
-							let xattraction = -1 * attractionAcceleration * Math.cos(angle)
-							let yattraction = -1 * attractionAcceleration * Math.sin(angle)
-							
-							dvd.innerText = xattraction
-								
-							x += xattraction;
-							y += yattraction;
-						}
-					}
-					
-					// imagine a gravity well in the center of the screen that accelerates movement
-					if(speedUpFasterFromEdges){
-						// get distances from center
-						let disx = x, disy = y;
-						if(screenWidth - x - dvd.clientWidth < disx) disx = screenWidth - x - dvd.clientWidth;
-						if(screenHeight - y - (11*dvd.clientHeight) < disy) disy = screenHeight - y - (11*dvd.clientHeight);
-						
-						if(edgesGoFastInstead){
-							disx = screenWidth/2-disx;
-							disy = screenHeight/2-disy;
-						}
-						
-						if(gravityWell){
-							// If we have a trajectory, keep our aim there
-							if(aimForCorners == true){ 
-								
-								aimNearCorner();
-							}
-							
-							// the greater the distance, the greater the speed boost. This is per frame, so small numbers here.
-							x+=disx*dirX/((60-min)+1);
-							y+=disy*dirY/((60-min)+1);
-						} else {
-							// we already moved DX/DY pixels. How many more do we want to move, based on distance? 
-							let deltaX = dirX*Math.abs(x-prevX), deltaY = dirY*Math.abs(y-prevY);
-							
-							// give it a boost
-							if(edgesGoFastInstead){
-								x+=deltaX*Math.max(disx,disy)/speedBoost;
-								y+=deltaY*Math.max(disx,disy)/speedBoost;
-							} else {
-								x+=deltaX*Math.min(disx,disy)/speedBoost;
-								y+=deltaY*Math.min(disx,disy)/speedBoost;
-							}
-						}
-					}
-					
-					if(useSineWaveOffset)
-					{
-						let sinemul = 1.0;
-						if(useCubicAcceleration)
-							sinemul = 0.25;
-
-						x += dirX * CalculateCustomSine(accelerationFrame + sineXAmplify, sineXStretch, sineFrame, speedX, sineXFunction) * sinemul;
-						y += dirY * CalculateCustomSine(accelerationFrame + sineYAmplify, sineYStretch, sineFrame, speedY, sineYFunction) * sinemul;
-						//x += dirX * (accelerationFrame + sineXAmplify)*Math.sin((sineFrame)/sineXStretch)*speedX;
-						//y += dirY * (accelerationFrame + sineYAmplify)*Math.cos((sineFrame)/sineYStretch)*speedY;
-						sineFrame++;
-						if(doAccelleration || useCubicAcceleration){
-							accelerationFrame += 1;
-						}
-					}
-
-					if(doAccelleration && !useSineWaveOffset){
-						if(accelerationFrame + accelerationOffset > 0){
-							x += dirX * (accelerationFrame + accelerationOffset)*speedX;
-							y += dirY * (accelerationFrame + accelerationOffset)*speedY;
-						}
-						accelerationFrame += 1;
-					}
-
-					if(useCubicAcceleration)
-					{
-						let mul = 1.0, cubicstart = 0, cubicend = 1;
-						if(negateCubicX)
-							mul = -1.0
-
-						if(useSineWaveOffset)
-							mul /= 4.0
-
-						if(invertCubicX)
-						{
-							cubicstart = 1;
-							cubicend = 0;
-						}
-
-						x += mul * dirX * cubicXMul * Bezier((accelerationFrame%cubicXFrames/cubicXFrames), cubicstart, cubicX1, cubicX2, cubicend)*speedX
-
-						mul = 1.0; 
-						cubicstart = 0; 
-						cubicend = 1;
-
-						if(negateCubicY)
-							mul = -1.0
-
-						if(useSineWaveOffset)
-							mul /= 4.0
-
-						if(invertCubicY){
-							cubicstart = 1;
-							cubicend = 0;
-						}
-						y += mul * dirY * cubicYMul * Bezier((accelerationFrame%cubicYFrames/cubicYFrames), cubicstart, cubicY1, cubicY2, cubicend)*speedY
-
-						if(accelerationFrame%cubicXFrames==0)
-							updateCubicsX();
-						if(accelerationFrame%cubicYFrames==0)
-							updateCubicsY();
-						accelerationFrame += 1;
-					}
-
-					dvd.style.left = x + "px";
-					dvd.style.top = y + "px";
-				} else if (movementType == "RANDOM"){
-					dvd.style.maxWidth = "400px";
-					try {
-						dvd.style.display = "inline-block";
-						// set in CSS block to propagate down
-						if(sec == nextRepositionSecond || firstRun){
-							if(doReposition)
-							{
-								randomlyRepositionElement(dvd);
-								
-								doReposition = false;
-								
-								repositionInterval = Math.floor(randomBetween(8, (60-min)/12.0)) // 10
-								
-								if(repositionInterval<=0) repositionInterval=2;
-								
-								if(doAnimationOnRePosition){
-									dvd.style.animation = 'none'; 
-									dvd.offsetHeight; /* trigger reflow */
-									dvd.style.animation = 'zoom ' + repositionInterval + 's cubic-bezier(' + Math.random() + ',' + randomBetween(-1.5,1.5) + ',' + Math.random() + ',' + randomBetween(-1.5,1.5) + ')';
-								}
-								
-								nextRepositionSecond = (sec + repositionInterval)%60	
-								if(nextRepositionSecond<=0) nextRepositionSecond=2;								
-								
-								updateColor();
-							}
-						} else {
-							doReposition = true;
-						}
-					} catch {}
-				}
-			}
-			
-			
-			
-			
-		</script>
-		
-		<!-- Not yet implemented... Black Hole -->
-		<script>
-			// Update the position and display text
-			function updateBlackHole(movement_type){
-				if(min==59 || movement_type == "CENTER"){
-					bh_x = screenWidth/2;
-					bh_y = screenHeight/2;
-					
-					bh.style.left = x + "px";
-					bh.style.top = y + "px";
-				} else if(movement_type == "DVD"){
-					bh.style.display = "table-row";
-					
-					// Don't let us clip off the X axis edges of the screen
-					if (bh_x + bh.clientWidth >= screenWidth || bh_x < 0) {
-						bh_dirX *= -1;
-						if(Math.round(0.75*Math.random(),0)==1) bh_dirY *= -1;
-						
-						if(bh_x<0) bh_x=0;
-						else bh_x=screenWidth-1;
-						
-						updateSpeedFactors("bh");
-					}
-					
-					// Don't let us clip off the Y axis edges of the screen
-					if (bh_y + (bh.clientHeight) >= screenHeight || bh_y < 0) {
-						bh_dirY *= -1;
-						if(Math.round(0.75*Math.random(),0)==1) bh_dirX *= -1;
-						
-						if(bh_y<0) bh_y=0;
-						else bh_y=screenHeight-1;
-						
-						updateSpeedFactors("bh");
-					}
-
-					// Jiggle on mouse hover
-					if(isMouseHover){
-						bh_dirY *= -1;
-						bh_dirX *= -1;
-						updateSpeedFactors("bh");
-					}
-					
-					// Random chance to swap directinos for no reason
-					// TODO, I don't like this on every single one
-					//if(Math.floor(Math.random()*oneInThisChanceOfChanging)==0) dirY *= -1;
-					//if(Math.floor(Math.random()*oneInThisChanceOfChanging)==0) dirX *= -1;
-					
-					// Move the element around
-					let prevX = bh_x, prevY = bh_y;
-					bh_x += bh_dirX * bh_speedX;
-					bh_y += bh_dirY * bh_speedY;
-					
-					// imagine a gravity well in the center of the screen that accelerates movement 
-					
-					if(speedUpFasterFromEdges){
-						// get distances from center
-						let disx = bh_x, disy = bh_y;
-						if(screenWidth - bh_x < disx) disx = screenWidth - bh_x;
-						if(screenHeight - bh_y < disy) disy = screenHeight - bh_y;
-						
-						if(edgesGoFastInstead){
-							disx = screenWidth/2-disx;
-							disy = screenHeight/2-disy;
-						}
-						
-						if(gravityWell){
-							// If we have a trajectory, keep our aim there
-							if(aimForCorners == true)
-							{ 
-								aimNearCorner();
-							}
-							
-							// the greater the distance, the greater the speed boost. This is per frame, so small numbers here.
-							bh_x+=disx*bh_dirX/((60-min)+1);
-							bh_y+=disy*bh_dirY/((60-min)+1);
-						} else {
-							// we already moved DX/DY pixels. How many more do we want to move, based on distance? 
-							let deltaX = bh_dirX*Math.abs(bh_x-prevX), deltaY = bh_dirY*Math.abs(bh_y-prevY);
-							
-							// give it a boost
-							if(edgesGoFastInstead){
-								bh_x+=deltaX*Math.max(disx,disy)/bh_speedBoost;
-								bh_y+=deltaY*Math.max(disx,disy)/bh_speedBoost;
-							} else {
-								bh_x+=deltaX*Math.min(disx,disy)/bh_speedBoost;
-								bh_y+=deltaY*Math.min(disx,disy)/bh_speedBoost;
-							}
-						}
-					}
-					
-					bh.style.left = bh_x + "px";
-					bh.style.top = bh_y + "px";
-				} else if (movement_type == "RANDOM"){
-					try {
-						bh.style.display = "inline-block";
-						// set in CSS block to propagate down
-						if(sec == nextRepositionSecond || firstRun){
-							if(doReposition)
-							{
-								randomlyRepositionElement(bh);
-								
-								doReposition = false;
-								
-								repositionInterval = Math.floor(randomBetween(10, (60-min)/12.0))
-								
-								if(repositionInterval<=0) repositionInterval=2;
-								
-								nextRepositionSecond = (sec + repositionInterval)%60	
-								if(nextRepositionSecond<=0) nextRepositionSecond=2;								
-								
-								updateColor();
-							}
-						} else {
-							doReposition = true;
-						}
-					} catch {}
-				}
-			}
-		</script>
-		
-		<!-- Helper functions that probably won't change much so I can collapse the script tag -->
-		<script>
-			
-			function aimNearCorner(){
-				// Really, there are 8 corners here. [0,5], [5,0], [0,h-5], [5,h], [w,5], [w-5,0], [w,h-5], [w-5,h]
-				let offset = 5;
-				let cornerX = screenWidth-(dvd.clientWidth);
-				let cornerY = screenHeight-(dvd.clientHeight*6);
-				
-				if(corner == 0) 
-					corner = Math.round(randomBetween(1,8),0);
-				
-				switch(corner){
-					case 1:
-						cornerX = 0;
-						cornerY = offset;
-						break;
-					case 2:
-						cornerX = offset;
-						cornerY = 0;
-						break;
-					case 3:
-						cornerX = 0;
-						cornerY -= offset;
-						break;
-					case 4:
-						cornerX = offset;
-						cornerY -= 0;
-						break;
-					case 5:
-						cornerX -= 0;
-						cornerY = offset;
-						break;
-					case 6:
-						cornerX -= offset;
-						cornerY = 0;
-						break;
-					case 7:
-						cornerX -= 0;
-						cornerY -= offset;
-						break;
-					case 8:
-						cornerX -= offset;
-						cornerY -= 0;
-						break;
-				}
-				
-				// Get from where we are now to the corner exactly.
-				let getthereinNframes = 100.0;
-				speedX = Math.abs(x-cornerX)/getthereinNframes;
-				speedY = Math.abs(y-cornerY)/getthereinNframes;
-							
-				if(Math.abs(speedX) < 0.25) speedX = getSpeedFactorXY(speedfactor);
-				if(Math.abs(speedY) < 0.25) speedY = getSpeedFactorXY(speedfactor);
-			}
-			
-			function updateDate(){
-				if(fadetimersynch == -1){
-					fadetimersynch = (sec-3)%5;
-				}
-				
-				// Move the timer
-				if(sec != lastSecond || min==59){
-					lastSecond = sec;
-					if(sec%5==fadetimersynch || min==59){
-						randomlyRepositionElement(day);
-						// Only reanimate every 10 seconds though
-						if(sec%10==fadetimersynch){
-							day.style.animation = 'none';
-							day.offsetHeight; /* trigger reflow */
-							day.style.animation = null; 
-						}
-					}
-				}
-				
-				day.innerHTML = getDate().toLocaleDateString('en-us', { weekday:"long", month:"long", day:"numeric"}) //+ "<br /><sub><sub><sub><sub><sub><sub><sub><sub> (" + funcGroup + " / " + oneInThisChanceOfChanging + ")</sub></sub></sub></sub></sub></sub></sub></sub>"
-			}
-			
-			function getFonts(ele){
-				const fontCheck = new Set([
-					// Windows 10
-					'Arial', 'Arial Black', 'Bahnschrift', 'Calibri', 'Cambria', 'Cambria Math', 'Candara', 'Comic Sans MS', 'Consolas', 'Constantia', 'Corbel', 'Courier New', 'Ebrima', 'Franklin Gothic Medium', 'Gabriola', 'Gadugi', 'Georgia', 'HoloLens MDL2 Assets', 'Impact', 'Ink Free', 'Javanese Text', 'Leelawadee UI', 'Lucida Console', 'Lucida Sans Unicode', 'Malgun Gothic', 'Microsoft Himalaya', 'Microsoft JhengHei', 'Microsoft New Tai Lue', 'Microsoft Sans Serif', 'Microsoft Tai Le', 'Microsoft YaHei', 'Microsoft Yi Baiti', 'MingLiU-ExtB', 'Mongolian Baiti', 'MS Gothic', 'MV Boli', 'Myanmar Text', 'Nirmala UI', 'Palatino Linotype', 'Segoe MDL2 Assets', 'Segoe Print', 'Segoe Script', 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Emoji', 'SimSun', 'Sitka', 'Sylfaen', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Yu Gothic',
-					// macOS
-					'American Typewriter', 'Andale Mono', 'Arial', 'Arial Black', 'Arial Narrow', 'Arial Rounded MT Bold', 'Arial Unicode MS', 'Avenir', 'Avenir Next', 'Avenir Next Condensed', 'Baskerville', 'Big Caslon', 'Bodoni 72', 'Bodoni 72 Oldstyle', 'Bodoni 72 Smallcaps', 'Bradley Hand', 'Brush Script MT', 'Chalkboard', 'Chalkboard SE', 'Chalkduster', 'Charter', 'Cochin', 'Comic Sans MS', 'Copperplate', 'Courier', 'Courier New', 'Didot', 'DIN Alternate', 'DIN Condensed', 'Futura', 'Geneva', 'Georgia', 'Gill Sans', 'Helvetica', 'Helvetica Neue', 'Herculanum', 'Hoefler Text', 'Impact', 'Lucida Grande', 'Luminari', 'Marker Felt', 'Menlo', 'Microsoft Sans Serif', 'Monaco', 'Noteworthy', 'Optima', 'Palatino', 'Papyrus', 'Phosphate', 'Rockwell', 'Savoye LET', 'SignPainter', 'Skia', 'Snell Roundhand', 'Tahoma', 'Times', 'Times New Roman', 'Trattatello', 'Trebuchet MS', 'Verdana', 'Zapfino',
-					].sort());
-
-				(async() => {
-					await document.fonts.ready;
-
-					const fontAvailable = new Set();
-
-					for (const font of fontCheck.values()) {
-						if (document.fonts.check(`12px "${font}"`)) {
-							fontAvailable.add(font);
-						}
-					}
-					  
-					ele.style.fontFamily = getRandomItem(fontAvailable);
-
-					//console.log('Font Used: '+ ele.style.fontFamily);
-				})();
-			}
-			
-			function getRandomItem(set) {
-				let items = Array.from(set);
-				return items[Math.floor(Math.random() * items.length)];
-			}
-			
-			// Gets a new HSL style color and returns it in hex form
-			function getNewRandomColorHSL(minlightness) {
-				let h = Math.floor(Math.random() * 360);
-				let s = Math.floor(Math.random() * 100);
-				let l = minlightness+Math.floor(Math.random() * 50);
-				
-				// 50-50 chance of just fully saturated color, or of pastel
-				if(Math.floor(Math.random()*2,0)>0){
-					s = 100;
-					l = 50;
-				}
-				
-				// Magic number. If either speed is an integer, return black
-				//if(Math.round(speedX,0)==speedX || Math.round(speedY,0)==speedY) return "#000";
-				
-				return hslToHex(h,s,l);
-			}
+			/* ---------- colors ---------- */
 
 			// Converts numeric HSL ([0,360],[0,100],[0,100]) to RGB in hex
 			function hslToHex(h, s, l) {
@@ -1142,1057 +413,1844 @@
 				const f = n => {
 					const k = (n + h / 30) % 12;
 					const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-					return Math.round(255 * color).toString(16).padStart(2, '0');   // convert to Hex and prefix "0" if needed
+					return Math.round(255 * color).toString(16).padStart(2, '0');
 				};
 				return `#${f(0)}${f(8)}${f(4)}`;
 			}
-			
+
+			function getNewRandomColorHSL(minlightness) {
+				// 50-50 chance of a fully saturated color, or of pastel
+				if(coin()) return hslToHex(Math.floor(Math.random() * 360), 100, 50);
+				return hslToHex(Math.floor(Math.random() * 360),
+				                Math.floor(Math.random() * 100),
+				                minlightness + Math.floor(Math.random() * 50));
+			}
+
+			// Holiday palette: dark/white/red plus one themed third color
+			function festiveColor(third){
+				const dark = Math.floor(randomBetween(0,8)).toString() + Math.floor(randomBetween(0,16)).toString(16);
+				switch(Math.floor(randomBetween(0,3))){
+					case 0:
+						const white = Math.floor(randomBetween(8,16)).toString(16);
+						return "#" + white.padStart(6, white);
+					case 1:
+						return "#FF" + dark + dark;
+					default:
+						return third(dark);
+				}
+			}
+
 			// Sets the color of the DVD logo time thing
 			function updateColor(){
-				var today = getDate();
+				const today = getDate(), month = today.getMonth() + 1, date = today.getDate();
 
-				if(today.getMonth() + 1 == 12 && today.getDate() >= 13 && today.getDate() <= 25)
-				{
-					// Christmas
-					var darkxmas = Math.floor(randomBetween(0,8)).toString();
-					darkxmas += Math.floor(randomBetween(0,16)).toString(16);
-					switch(Math.floor(randomBetween(0,3))){
-						case 0:
-							var whitexmas = Math.floor(randomBetween(8,16)).toString(16);
-							whitexmas = whitexmas.padStart(6,whitexmas);
-							dvd.style.color = "#" + whitexmas;
-							break;
-						case 1:
-							dvd.style.color = "#FF" + darkxmas + darkxmas;
-							break;
-						default:
-							dvd.style.color = "#" + darkxmas + "FF" + darkxmas;
-							break;
+				if(month == 12 && date >= 13 && date <= 25)
+					dvd.style.color = festiveColor(d => "#" + d + "FF" + d);          // Christmas
+				else if(month == 7 && date <= 15)
+					dvd.style.color = festiveColor(d => "#" + d + d + "FF");          // July 4th
+				else
+					dvd.style.color = getNewRandomColorHSL(fx.pastelOnly ? 80 : 50);
+			}
+
+			/* ---------- fonts: probe once, then just pick ---------- */
+
+			const FONT_CANDIDATES = [...new Set([
+				// Windows 10
+				'Arial', 'Arial Black', 'Bahnschrift', 'Calibri', 'Cambria', 'Cambria Math', 'Candara', 'Comic Sans MS', 'Consolas', 'Constantia', 'Corbel', 'Courier New', 'Ebrima', 'Franklin Gothic Medium', 'Gabriola', 'Gadugi', 'Georgia', 'HoloLens MDL2 Assets', 'Impact', 'Ink Free', 'Javanese Text', 'Leelawadee UI', 'Lucida Console', 'Lucida Sans Unicode', 'Malgun Gothic', 'Microsoft Himalaya', 'Microsoft JhengHei', 'Microsoft New Tai Lue', 'Microsoft Sans Serif', 'Microsoft Tai Le', 'Microsoft YaHei', 'Microsoft Yi Baiti', 'MingLiU-ExtB', 'Mongolian Baiti', 'MS Gothic', 'MV Boli', 'Myanmar Text', 'Nirmala UI', 'Palatino Linotype', 'Segoe MDL2 Assets', 'Segoe Print', 'Segoe Script', 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Emoji', 'SimSun', 'Sitka', 'Sylfaen', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Yu Gothic',
+				// macOS
+				'American Typewriter', 'Andale Mono', 'Arial Narrow', 'Arial Rounded MT Bold', 'Arial Unicode MS', 'Avenir', 'Avenir Next', 'Avenir Next Condensed', 'Baskerville', 'Big Caslon', 'Bodoni 72', 'Bodoni 72 Oldstyle', 'Bodoni 72 Smallcaps', 'Bradley Hand', 'Brush Script MT', 'Chalkboard', 'Chalkboard SE', 'Chalkduster', 'Charter', 'Cochin', 'Copperplate', 'Courier', 'Didot', 'DIN Alternate', 'DIN Condensed', 'Futura', 'Geneva', 'Gill Sans', 'Helvetica', 'Helvetica Neue', 'Herculanum', 'Lucida Grande', 'Luminari', 'Marker Felt', 'Menlo', 'Monaco', 'Noteworthy', 'Optima', 'Palatino', 'Papyrus', 'Phosphate', 'Rockwell', 'Savoye LET', 'SignPainter', 'Skia', 'Snell Roundhand', 'Times', 'Trattatello', 'Zapfino',
+			])].sort();
+
+			let availableFonts = ['Arial'];
+			(async () => {
+				await document.fonts.ready;
+				const found = FONT_CANDIDATES.filter(f => document.fonts.check(`12px "${f}"`));
+				if(found.length) availableFonts = found;
+			})();
+
+			const pickFont = ele => ele.style.fontFamily = randomItem(availableFonts);
+
+			/* ---------- the reusable positioning system ---------- */
+
+			// One bouncing thing. `full` turns on the sine/cubic/accel/decel pipeline
+			// and corner aiming; a plain mover just bounces off the walls.
+			// wFactor/hFactor are calibration knobs: the clock's real footprint is
+			// clientWidth x 11*clientHeight because of the table-row layout.
+			class Mover {
+				constructor(el, opts){
+					this.el = el;
+					Object.assign(this, {
+						x: 0, y: 0, dirX: 1, dirY: 1,
+						speedX: 1.1, speedY: 1.1, speedfactor: 50.1,
+						speedBoost: 10.0, boostFastest: 10.0, boostSlowest: 100.0,
+						wFactor: 1, hFactor: 1, cornerHFactor: 1,
+						full: false, chaseTarget: null,   // null = chase every spawned hole (the clock's case)
+						isHole: false,   // only real holes (newHole()) carry their own push/pull draw
+						ghostX: null, ghostY: null,   // wrap-around twins; only the clock has any (it's the only visible mover)
+					}, opts);
+
+					this.w = 0; this.h = 0;
+					this.corner = 0;
+					this.sineFrame = 0;
+					this.accelFrame = 0;
+					this.framesUntilNextBounce = 0;
+					this.countingDown = false;
+					this.chaseMul = 1;
+					this.trigScale = 1;   // replaced by a probe at the first wall
+					this.trigPhaseY = 100;
+					this.sine = { xStretch: 100, yStretch: 100, xAmplify: 2, yAmplify: 2, xFunc: 1, yFunc: 1 };
+					this.cubicX = newCubic();
+					this.cubicY = newCubic();
+					this.decel = { boostX: 20, skewX: 100, stretchX: 40, boostY: 20, skewY: 100, stretchY: 40 };
+
+					// Plain movers run on their own clock. 0 start = roll over on the first frame.
+					this.cycleStart = 0;
+					this.cycleMs = randomBetween(CYCLE_MS_MAX, CYCLE_MS_MIN);
+				}
+
+				// 0..1 through this mover's cycle: the real hour for the clock, an
+				// independent timer for everything else.
+				phase(){
+					return this.full ? (min + sec/60.0) / 60.0
+					                 : (performance.now() - this.cycleStart) / this.cycleMs;
+				}
+
+				// Roll the cycle over when it runs out, and reroll its length so the
+				// black hole never settles into a period you can predict off the clock.
+				tickCycle(){
+					if(this.full) return;
+					const now = performance.now();
+					if(now - this.cycleStart < this.cycleMs) return;
+
+					this.cycleStart = now;
+					this.cycleMs = randomBetween(CYCLE_MS_MAX, CYCLE_MS_MIN);
+					this.newSpeeds();
+				}
+
+				// One layout read per frame instead of six.
+				measure(){
+					this.w = this.el.clientWidth * this.wFactor;
+					this.h = this.el.clientHeight * this.hFactor;
+				}
+
+				place(){
+					this.el.style.left = this.x + "px";
+					this.el.style.top = this.y + "px";
+					this.placeGhosts();
+				}
+
+				// The wrap twin: same look as the real element, offset by a full screen so the
+				// part that's already wrapped off one edge shows up sliding in on the other.
+				// Only drawn while it's actually hanging off that edge; hidden otherwise.
+				placeGhosts(){
+					if(this.ghostX){
+						if(fx.wrapX && (this.x < 0 || this.x + this.w > screenWidth)){
+							this.ghostX.style.cssText = this.el.style.cssText;
+							this.ghostX.textContent = this.el.textContent;
+							this.ghostX.style.left = (this.x + (this.x < 0 ? screenWidth : -screenWidth)) + "px";
+							this.ghostX.style.top = this.y + "px";
+						} else {
+							this.ghostX.style.display = "none";
+						}
 					}
-				} 
-				else if(today.getMonth() + 1 == 7 && today.getDate() <= 15)
-				{
-					// July 4th
-					var darkmurica = Math.floor(randomBetween(0,8)).toString();
-					darkmurica += Math.floor(randomBetween(0,16)).toString(16);
-					switch(Math.floor(randomBetween(0,3))){
-						case 0:
-							var whitemurica = Math.floor(randomBetween(8,16)).toString(16);
-							whitemurica = whitemurica.padStart(6,whitemurica);
-							dvd.style.color = "#" + whitemurica;
-							break;
-						case 1:
-							dvd.style.color = "#FF" + darkmurica + darkmurica;
-							break;
-						default:
-							dvd.style.color = "#" + darkmurica + darkmurica + "FF";
-							break;
+					if(this.ghostY){
+						if(fx.wrapY && (this.y < 0 || this.y + this.h > screenHeight)){
+							this.ghostY.style.cssText = this.el.style.cssText;
+							this.ghostY.textContent = this.el.textContent;
+							this.ghostY.style.left = this.x + "px";
+							this.ghostY.style.top = (this.y + (this.y < 0 ? screenHeight : -screenHeight)) + "px";
+						} else {
+							this.ghostY.style.display = "none";
+						}
+					}
+				}
+
+				center(){
+					this.x = (screenWidth - this.w) / 2;
+					this.y = screenHeight / 2 - this.el.clientHeight * this.cornerHFactor;
+				}
+
+				update(){
+					this.measure();
+					this.tickCycle();
+					this.bounceOffWalls();
+
+					const prevX = this.x, prevY = this.y;
+					this.x += this.dirX * this.speedX;
+					this.y += this.dirY * this.speedY;
+
+					// frozen mid-bounce: keep the state, skip the paint
+					if(this.countingDown && fx.waitBeforeNextBounce) return;
+
+					if(this.full && fx.pullTowardBH){
+						if(this.chaseTarget) this.chase(this.chaseTarget);
+						else for(const h of holes) this.chase(h);
+					}
+					// After chase, which is what advances sineFrame: same frame of the same wave.
+					if(this.full && fx.trigChase) this.trigDrift();
+					if(fx.speedUpFasterFromEdges) this.applyEdgeBoost(prevX, prevY);
+					if(this.full) this.applyAcceleration();
+					else this.applySineOffset();
+
+					this.place();
+				}
+
+				bounceOffWalls(){
+					// Chasing the hole means the wall only flips that axis: no random second flip,
+					// and onBounce scales the speed instead of rerolling it.
+					const elastic = this.full && fx.pullTowardBH;
+
+					// Wrap: let it run fully off the far edge (place()/placeGhosts() already
+					// showed the twin sliding in on the near edge) before folding it back on.
+					// The fold has to move it by exactly screenWidth/screenHeight - the same
+					// period placeGhosts() uses for the twin's offset - not screenWidth+this.w.
+					// Off by the element's own width there swaps which side gets the sliver and
+					// which gets the bulk of the shape, which reads as snapping back to the edge
+					// it just crossed instead of continuing through it.
+					// Everything onBounce() does still fires - color, chase reroll, stickiness,
+					// the hole flinch - onBounce() itself never touches dirX/dirY, only the
+					// classic-bounce branch below does that, so reusing it here carries no flip.
+					if(fx.wrapX){
+						if(this.x + this.w < 0){ this.x += screenWidth; this.onBounce(); }
+						else if(this.x > screenWidth){ this.x -= screenWidth; this.onBounce(); }
+					} else if(this.x + this.w >= screenWidth || this.x < 0){
+						this.x = this.x < 0 ? 0 : screenWidth - 1 - this.w;
+						this.dirX *= -1;
+						if(!elastic && Math.round(0.75 * Math.random()) == 1) this.dirY *= -1;  // ~33% of the time
+						this.onBounce();
+					}
+
+					if(fx.wrapY){
+						if(this.y + this.h < 0){ this.y += screenHeight; this.onBounce(); }
+						else if(this.y > screenHeight){ this.y -= screenHeight; this.onBounce(); }
+					} else if(this.y + this.h >= screenHeight || this.y < 0){
+						this.y = this.y < 0 ? 0 : screenHeight - 1 - this.h;
+						this.dirY *= -1;
+						if(!elastic && Math.round(0.75 * Math.random()) == 1) this.dirX *= -1;
+						this.onBounce();
+					}
+
+					// Jiggle on mouse hover
+					if(isMouseHover){
+						this.dirX *= -1;
+						this.dirY *= -1;
+						this.newSpeeds();
+					}
+				}
+
+				onBounce(){
+					// Zoomies teleports the hole on a timer; a wall makes it flinch too. Before the
+					// chase runs this frame, so the clock leaves the wall already aimed at the new
+					// spot instead of spending a frame committed to where the hole used to be.
+					if(this.full && holeMode == "RANDOM"){
+						for(const h of holes){
+							randomlyRepositionElement(h.el, 100, 100);
+							syncHoleFromDOM(h);
+						}
+					}
+
+					// Chase modes: the wall scales the incoming speed instead of rerolling it,
+					// so the direction flip still carries momentum. Plus a color and a fresh accel.
+					if(this.full && fx.pullTowardBH){
+						// Floored: a run of low draws decays the speed to nothing and the clock
+						// sits on the wall re-triggering the bounce every frame.
+						const [lo, hi] = restitutionRange();
+						const restitution = randomBetween(hi, lo);
+						this.speedX = Math.max(this.speedX * restitution, MIN_SPEED);
+						this.speedY = Math.max(this.speedY * restitution, MIN_SPEED);
+						updateColor();
+						this.rollChaseAccel();
+						if(fx.trigChase) this.rollTrigChase();
+						if(fx.chaseAccelRandom) fx.chaseAccelMul = randomBetween(0.25, 5);
+						return;
+					}
+
+					const waiting = this.full && fx.waitBeforeNextBounce;
+					if(waiting) this.countingDown = true;
+					this.newSpeeds();
+					if(!waiting) return;
+
+					if(this.framesUntilNextBounce > 0){
+						this.speedX = 0;
+						this.speedY = 0;
+					} else {
+						this.framesUntilNextBounce = Math.floor(randomBetween(BOUNCE_WAIT_MIN, BOUNCE_WAIT_MAX));
+					}
+				}
+
+				// Called once per frame while parked, to un-park.
+				tickCountdown(){
+					if(!this.countingDown) return;
+					if(--this.framesUntilNextBounce >= 0) return;
+
+					this.framesUntilNextBounce = 0;
+					this.countingDown = false;
+					this.newSpeeds();
+					this.framesUntilNextBounce = Math.floor(randomBetween(BOUNCE_WAIT_MIN, BOUNCE_WAIT_MAX));
+				}
+
+				newSpeeds(){
+					this.speedBoost = randomBetween(this.boostFastest, this.boostSlowest);
+
+					if(!this.full){
+						this.speedX = randomSpeed(this.speedfactor);
+						this.speedY = randomSpeed(this.speedfactor);
+						// Own wave shape, rerolled on its own cycle. Func 0 is skipped:
+						// its constant -stretch term just pins a slow mover to a wall.
+						this.sine = {
+							xStretch: randomBetween(SINE_STRETCH_MIN, SINE_STRETCH_MAX),
+							yStretch: randomBetween(SINE_STRETCH_MIN, SINE_STRETCH_MAX),
+							xAmplify: randomBetween(SINE_AMPLIFY_MIN, SINE_AMPLIFY_MAX),
+							yAmplify: randomBetween(SINE_AMPLIFY_MIN, SINE_AMPLIFY_MAX),
+							xFunc: Math.floor(randomBetween(1, 13)),
+							yFunc: Math.floor(randomBetween(1, 13)),
+						};
+						return;
+					}
+
+					this.accelFrame = 0;
+					this.sine = {
+						xStretch: randomBetween(SINE_STRETCH_MIN, SINE_STRETCH_MAX),
+						yStretch: randomBetween(SINE_STRETCH_MIN, SINE_STRETCH_MAX),
+						xAmplify: randomBetween(SINE_AMPLIFY_MIN, SINE_AMPLIFY_MAX),
+						yAmplify: randomBetween(SINE_AMPLIFY_MIN, SINE_AMPLIFY_MAX),
+						xFunc: Math.floor(randomBetween(0, 13)),
+						yFunc: Math.floor(randomBetween(0, 13)),
+					};
+					this.cubicX = newCubic();
+					this.cubicY = newCubic();
+
+					updateColor();
+					// Speed ceiling follows the hour: slow at :00, frantic near :59
+					const curmin = min + sec/60.0;
+					this.speedfactor = (1e-5*Math.pow(curmin,4)) - (0.0009*Math.pow(curmin,3))
+					                 + (0.0262*Math.pow(curmin,2)) - (0.1815*curmin) + 1.0482;
+
+					if(fx.aimForCorners){
+						this.corner = 0;
+						this.aimNearCorner();
+					} else {
+						this.speedX = randomSpeed(this.speedfactor);
+						this.speedY = randomSpeed(this.speedfactor);
+
+						if(fx.useSineWaveOffset && fx.doAcceleration){
+							this.speedX += Math.sin(this.speedX) * Math.floor(randomBetween(-5,5));
+							this.speedY += Math.cos(this.speedY) * Math.floor(randomBetween(-5,5));
+						}
+						if(fx.speedUpFasterFromEdges){
+							const div = fx.gravityWell ? 20.0 : 2.0;
+							this.speedX /= div;
+							this.speedY /= div;
+						}
+						if(fx.doAcceleration){
+							this.speedX *= ACCEL_MULTIPLIER;
+							this.speedY *= ACCEL_MULTIPLIER;
+						}
+						if(fx.doDeceleration || fx.useCubicAcceleration){
+							this.speedY *= DECEL_MULTIPLIER;
+							this.decel = {
+								boostX: randomBetween(10,30), skewX: randomBetween(100,200), stretchX: randomBetween(30,50),
+								boostY: randomBetween(10,30), skewY: randomBetween(100,200), stretchY: randomBetween(30,50),
+							};
+						}
+					}
+
+					if(this.speedX == 0) this.speedX = 0.001;
+					if(this.speedY == 0) this.speedY = 0.001;
+				}
+
+				// Really, there are 8 corners here. [0,5], [5,0], [0,h-5], [5,h], [w,5], [w-5,0], [w,h-5], [w-5,h]
+				aimNearCorner(){
+					const offset = 5;
+					let cornerX = screenWidth - this.w;
+					let cornerY = screenHeight - this.el.clientHeight * this.cornerHFactor;
+
+					if(this.corner == 0) this.corner = Math.round(randomBetween(1,8));
+
+					switch(this.corner){
+						case 1: cornerX = 0;       cornerY = offset;  break;
+						case 2: cornerX = offset;  cornerY = 0;       break;
+						case 3: cornerX = 0;       cornerY -= offset; break;
+						case 4: cornerX = offset;                     break;
+						case 5:                    cornerY = offset;  break;
+						case 6: cornerX -= offset; cornerY = 0;       break;
+						case 7:                    cornerY -= offset; break;
+						case 8: cornerX -= offset;                    break;
+					}
+
+					// Get from where we are now to the corner exactly.
+					const getThereInNFrames = 100.0;
+					this.speedX = Math.abs(this.x - cornerX) / getThereInNFrames;
+					this.speedY = Math.abs(this.y - cornerY) / getThereInNFrames;
+
+					if(Math.abs(this.speedX) < 0.25) this.speedX = randomSpeed(this.speedfactor);
+					if(Math.abs(this.speedY) < 0.25) this.speedY = randomSpeed(this.speedfactor);
+				}
+
+				// Gravity well in the center of the screen (or at the edges, inverted)
+				applyEdgeBoost(prevX, prevY){
+					let disx = this.x, disy = this.y;
+					if(screenWidth  - this.x - this.w < disx) disx = screenWidth  - this.x - this.w;
+					if(screenHeight - this.y - this.h < disy) disy = screenHeight - this.y - this.h;
+
+					if(fx.edgesGoFastInstead){
+						disx = screenWidth/2 - disx;
+						disy = screenHeight/2 - disy;
+					}
+
+					if(fx.gravityWell){
+						if(fx.aimForCorners && this.full) this.aimNearCorner();  // keep our trajectory
+
+						// the greater the distance, the greater the boost. Per frame, so small numbers.
+						// Ramps over this mover's own cycle, not necessarily the hour.
+						const ramp = (1 - this.phase()) * 60 + 1;
+						this.x += disx * this.dirX / ramp;
+						this.y += disy * this.dirY / ramp;
+						return;
+					}
+
+					// we already moved DX/DY pixels. How many more, based on distance?
+					const deltaX = this.dirX * Math.abs(this.x - prevX),
+					      deltaY = this.dirY * Math.abs(this.y - prevY),
+					      dis = fx.edgesGoFastInstead ? Math.max(disx, disy) : Math.min(disx, disy);
+
+					this.x += deltaX * dis / this.speedBoost;
+					this.y += deltaY * dis / this.speedBoost;
+				}
+
+				// Rerolled at every wall. The ceiling rises linearly with the minute hand, so the
+				// same preset creeps at :00 and slams around at :59; the jitter keeps two bounces
+				// in the same minute from feeling identical.
+				rollChaseAccel(){
+					const t = (min + sec/60.0) / 60.0;
+					// 0 when we're on top of the hole, 1 a full screen diagonal away.
+					// No target (no holes spawned) means nothing to scale by: treat as far.
+					const target = this.chaseTarget || nearestHole(this);
+					const far = target ? Math.min(this.distanceTo(target) / (Math.hypot(screenWidth, screenHeight) || 1), 1) : 1;
+					this.chaseMul = (BH_MUL_AT_00 + (BH_MUL_AT_59 - BH_MUL_AT_00) * t)
+					              * randomBetween(1 + BH_MUL_JITTER, 1 - BH_MUL_JITTER)
+					              * randomBetween(BH_POWER_MAX, BH_POWER_MIN)
+					              * (BH_FAR_NEAR + (BH_FAR_AWAY - BH_FAR_NEAR) * far);
+				}
+
+				// Pure shape, no scale: fixed speed and wavesec keep the wave from drifting as
+				// the clock speeds up or the second hand moves, so one probe stays valid.
+				rawTrig(frame){
+					const s = this.sine;
+					return customSine(s.xAmplify, s.xStretch, frame, 2, s.xFunc, 30, 1);
+				}
+
+				// The roulette: every wall picks a new relationship with the hole and a new
+				// wave shape to feel it through. Func 0 is skipped, its constant -stretch term
+				// pins the wobble to the clamp and the pull just runs backwards forever.
+				//
+				// Raw amplitude swings by orders of magnitude between shapes: some pin the clamp
+				// on every frame, others sit at zero for thousands. So probe each draw, normalize
+				// it to its own mean level, and throw back anything flat or too spiky to feel.
+				// ponytail: O(TRIG_PROBE_FRAMES) per wall, ~0.1ms. Precompute per (func, stretch)
+				// if bounces ever get cheap enough for this to show up.
+				rollTrigChase(){
+					// Push/pull is rolled per hole, not once for the pack: on the clock's own
+					// bounce every hole gets its own independent draw; a hole bouncing on its
+					// own wall (Frenemies/Repulsive) only rerolls itself.
+					if(this.isHole) this.pullMode = randomItem(BH_MODES);
+					else for(const h of holes) h.pullMode = randomItem(BH_MODES);
+					this.sineFrame = 0;
+
+					for(let attempt = 0; attempt < 6; attempt++){
+						this.sine = {
+							...this.sine,
+							xStretch: randomBetween(SINE_STRETCH_MIN, SINE_STRETCH_MAX),
+							xAmplify: randomBetween(SINE_AMPLIFY_MIN, SINE_AMPLIFY_MAX),
+							xFunc: Math.floor(randomBetween(1, 13)),
+						};
+
+						let sum = 0, peak = 0;
+						for(let f = 0; f < TRIG_PROBE_FRAMES; f++){
+							const v = Math.abs(this.rawTrig(f));
+							sum += v;
+							if(v > peak) peak = v;
+						}
+						const mean = sum / TRIG_PROBE_FRAMES;
+						if(mean <= TRIG_DEAD_WAVE) continue;       // flat draw, nothing to ride
+						if(peak/mean > TRIG_MAX_CREST) continue;   // spike train, nothing to feel
+
+						this.trigScale = TRIG_TARGET_MEAN / mean;
+						// Roughly a quarter period of this draw, so X and Y don't move as one.
+						this.trigPhaseY = Math.round(1.57 * this.sine.xStretch);
+						return;
+					}
+					this.trigScale = 0;   // six unusable draws in a row: coast this leg
+				}
+
+				// The wave as motion, not just as a gain on the pull: gravity moves the clock toward
+				// the hole, this moves it along the shape at the same time. Reuses the wave the probe
+				// already normalized (so it can't hand back a dead or spiky draw), read a quarter
+				// period later on Y so the drift traces a figure instead of a diagonal line.
+				// Fixed amplitude on purpose: scaling by speedX would let a 30 px/frame slingshot
+				// fling the clock a screen width in one frame.
+				trigDrift(){
+					this.x += TRIG_DRIFT * this.driftAt(this.sineFrame);
+					this.y += TRIG_DRIFT * this.driftAt(this.sineFrame + this.trigPhaseY);
+				}
+
+				// Unbiased, unlike trigWobble: a DC term here would be a constant sideways shove.
+				driftAt(frame){
+					return Math.max(Math.min(this.trigScale * this.rawTrig(frame), 1), -1);
+				}
+
+				// Chase strength on a wave instead of a constant. Scaled so a typical frame sits
+				// at TRIG_TARGET_MEAN of full, then ridden on top of TRIG_BIAS so the pull nets
+				// out toward the hole instead of cancelling. The clamp is for the crests.
+				trigWobble(){
+					const w = this.trigScale * this.rawTrig(this.sineFrame++);
+					const shaped = TRIG_BIAS + (1 - TRIG_BIAS) * Math.max(Math.min(w, 1), -1);
+					return shaped * TRIG_WOBBLE_MAX;
+				}
+
+				// Hitbox center to hitbox center.
+				distanceTo(other){
+					return Math.hypot((other.x + other.w/2) - (this.x + this.w/2),
+					                  (other.y + other.h/2) - (this.y + this.h/2)) || 1;
+				}
+
+				// Steer toward another mover, hitbox center to hitbox center. Accelerates the
+				// velocity, never the position, so momentum carries it past the target.
+				//   "thrust":    constant pull, no brakes. Guaranteed overshoot, every pass.
+				//   "gravity":   inverse-square, so the last few pixels yank hardest.
+				//   "shove":     thrust with the sign flipped, running away forever.
+				//   "whitehole": inverse-square outward, ignorable far off, a kick up close.
+				// ponytail: fixed mass, give Movers a `mass` field if anything else ever attracts.
+				chase(other){
+					const dx = (other.x + other.w/2) - (this.x + this.w/2),
+					      dy = (other.y + other.h/2) - (this.y + this.h/2),
+					      dist = this.distanceTo(other);
+					// Only the roulette (trigChase) presets roll a push/pull draw per hole; the fixed-
+					// mode presets (Moth to a Flame, White Hole, ...) share one mode for every hole,
+					// same as before - a hole's own leftover spawn-time draw must not override it.
+					const holeSide = this.isHole ? this : other;
+					let mode = fx.trigChase ? (holeSide.pullMode || fx.pullTowardBH) : fx.pullTowardBH;
+					// Repulsive: a hole always attracts and whoever isn't a hole (the clock) always
+					// flees, whichever base type (gravity/thrust) that hole's own draw picked.
+					if(fx.repulsive){
+						const attract = mode == "whitehole" ? "gravity" : mode == "shove" ? "thrust" : mode;
+						mode = this.isHole ? attract : (attract == "gravity" ? "whitehole" : "shove");
+					}
+					const inverseSquare = mode == "gravity" || mode == "whitehole",
+					      sign = (mode == "shove" || mode == "whitehole") ? -1 : 1;
+
+					// Capped twice, and the second one matters: BH_MAX_PULL bounds the inverse-square
+					// term, but chaseMul and the wave multiply on top of it, so on its own it isn't
+					// a ceiling at all. The roulette turned a "capped" 2.0 into 30-odd and pinned
+					// the clock at BH_MAX_SPEED. BH_MAX_ACCEL is the one that actually holds.
+					const wobble = fx.trigChase ? this.trigWobble() : 1;
+					let base = inverseSquare ? Math.min(BH_MASS / (dist*dist), BH_MAX_PULL) : BH_THRUST;
+					// Wobbleton flattens gravity's curve. Raw inverse-square is all or nothing here:
+					// a yank inside arm's reach and nothing at all across the room, which reads as
+					// the wave doing all the work and the hole doing none. Compressing the normalized
+					// pull lifts the far field without changing the shape, and the lower ceiling
+					// takes the close-range yank back down. Gravity only; the other three are either
+					// flat already or exist to be violent up close.
+					if(fx.trigChase && mode == "gravity")
+						base = Math.pow(base / BH_MAX_PULL, TRIG_GRAV_COMPRESS) * TRIG_GRAV_PULL;
+					const raw = sign * this.chaseMul * wobble * base * fx.chaseAccelMul;
+					const accelCap = BH_MAX_ACCEL * fx.chaseAccelMul;
+					const accel = Math.max(Math.min(raw, accelCap), -accelCap);
+
+					let vx = this.dirX * this.speedX + accel * dx/dist,
+					    vy = this.dirY * this.speedY + accel * dy/dist;
+
+					let v = Math.hypot(vx, vy);
+
+					// Governor: bleed only the speed above cruising, so a slingshot decays back to
+					// a sane pace over ~a second while normal drifting is left untouched. It scales
+					// with the wave, because a flat 3% can't hold back a pull the roulette just
+					// multiplied by 16, and that pinned the clock at the cap for 4% of its life.
+					// Every roulette mode gets governed, not just gravity: at 16x even flat thrust
+					// climbs to the cap and stays there.
+					const baseDrag = fx.trigChase ? BH_ROULETTE_DRAG : (BH_DRAG[mode] || 0);
+					const drag = Math.min(baseDrag * Math.max(1, Math.abs(wobble)), BH_MAX_DRAG);
+					if(drag && v > BH_CRUISE){
+						const eased = BH_CRUISE + (v - BH_CRUISE) * (1 - drag);
+						vx *= eased/v; vy *= eased/v;
+						v = eased;
+					}
+
+					if(v > BH_MAX_SPEED){ vx *= BH_MAX_SPEED/v; vy *= BH_MAX_SPEED/v; }
+
+					this.dirX = vx < 0 ? -1 : 1; this.speedX = Math.abs(vx);
+					this.dirY = vy < 0 ? -1 : 1; this.speedY = Math.abs(vy);
+				}
+
+				// Plain movers always ride a sine wave, driven by their own cycle phase
+				// instead of min/sec, so the wobble never syncs up with the clock.
+				applySineOffset(){
+					const s = this.sine, p = Math.min(Math.max(this.phase(), 0), 1);
+					const wavesec = 1 + 58*p, tempo = 0.75 + (1 - p)/2.0;
+					this.x += this.dirX * customSine(s.xAmplify, s.xStretch, this.sineFrame, this.speedX, s.xFunc, wavesec, tempo);
+					this.y += this.dirY * customSine(s.yAmplify, s.yStretch, this.sineFrame, this.speedY, s.yFunc, wavesec, tempo);
+					this.sineFrame++;
+				}
+
+				applyAcceleration(){
+					if(fx.useSineWaveOffset){
+						const sinemul = fx.useCubicAcceleration ? 0.25 : 1.0;
+						const s = this.sine;
+						this.x += this.dirX * customSine(this.accelFrame + s.xAmplify, s.xStretch, this.sineFrame, this.speedX, s.xFunc) * sinemul;
+						this.y += this.dirY * customSine(this.accelFrame + s.yAmplify, s.yStretch, this.sineFrame, this.speedY, s.yFunc) * sinemul;
+						this.sineFrame++;
+						if(fx.doAcceleration || fx.useCubicAcceleration || fx.doDeceleration) this.accelFrame++;
+					} else {
+						if(fx.doAcceleration){
+							this.x += this.dirX * (this.accelFrame + ACCEL_OFFSET) * this.speedX;
+							this.y += this.dirY * (this.accelFrame + ACCEL_OFFSET) * this.speedY;
+							this.accelFrame++;
+						}
+						if(fx.doDeceleration){
+							const d = this.decel;
+							this.x += this.dirX * d.boostX * stretchedPolyOverExp(this.accelFrame, d.stretchX, d.skewX);
+							this.y += this.dirY * d.boostY * stretchedPolyOverExp(this.accelFrame, d.stretchY, d.skewY);
+							this.accelFrame++;
+						}
+					}
+
+					if(!fx.useCubicAcceleration) return;
+
+					this.x += this.cubicOffset(this.cubicX, this.dirX, this.speedX);
+					this.y += this.cubicOffset(this.cubicY, this.dirY, this.speedY);
+
+					if(this.accelFrame % this.cubicX.frames == 0) this.cubicX = newCubic();
+					if(this.accelFrame % this.cubicY.frames == 0) this.cubicY = newCubic();
+					this.accelFrame++;
+				}
+
+				cubicOffset(c, dir, speed){
+					let mul = c.negate ? -1.0 : 1.0;
+					if(fx.useSineWaveOffset) mul /= 4.0;
+					const from = c.invert ? 1 : 0, to = c.invert ? 0 : 1;
+					return mul * dir * c.mul * bezier((this.accelFrame % c.frames) / c.frames, from, c.p1, c.p2, to) * speed;
+				}
+			}
+
+			function newCubic(){
+				return {
+					mul: randomBetween(CUBIC_MIN_MUL, CUBIC_MAX_MUL),
+					frames: Math.floor(randomBetween(CUBIC_MIN_FRAMES, CUBIC_MAX_FRAMES)),
+					p1: randomBetween(-1.5, 1.5),
+					p2: randomBetween(-1.5, 1.5),
+					negate: coin(),
+					invert: coin(),
+				};
+			}
+
+			// The clock reserves 11 rows of height for bouncing, 6 for corner aiming.
+			const clock = new Mover(dvd, { full: true, hFactor: 11, cornerHFactor: 6, ghostX: dvdGhostX, ghostY: dvdGhostY });
+
+			// Presets 13-20 (Moth to a Flame .. Repulsive) always put a black hole on
+			// screen; this only gates the switch-in spawn, so Random (dvd6) can still
+			// roll its own holes in and out on its own minute-by-minute reroll.
+			const BH_PRESET_MIN = 13;
+			const usesBlackHole = grp => grp >= BH_PRESET_MIN;
+
+			// Zero or more holes, spawned fresh per preset switch. Each is its own Mover/element;
+			// they only ever appear as `other` in the clock's chase(), never each other's.
+			let holes = [];
+
+			function createHoleElement(){
+				const el = document.createElement("div");
+				el.className = "blackhole";
+				el.textContent = " ";
+				// A hole spawned mid-debug (a preset switch, an Up arrow) needs the outline too,
+				// or it stays a 1x1px black square on a black background until Pause is toggled twice.
+				el.style.border = debugmode ? "2px solid green" : "none";
+				document.body.appendChild(el);
+				return el;
+			}
+
+			function despawnHoles(){
+				for(const h of holes) h.el.remove();
+				holes = [];
+			}
+
+			function newHole(){
+				const h = new Mover(createHoleElement(), {
+					dirX: -1, dirY: -1,
+					speedfactor: 1.1, speedBoost: 1.0, boostFastest: 1.0, boostSlowest: 1.0,
+					chaseTarget: clock, isHole: true, pullMode: randomItem(BH_MODES),
+				});
+				randomlyRepositionElement(h.el, 100, 100);   // on screen, not a fixed corner
+				syncHoleFromDOM(h);
+				return h;
+			}
+
+			let initialHoleCount = 0, holesJustSpawned = false;
+
+			function spawnHoles(count){
+				despawnHoles();
+				for(let i = 0; i < count; i++) holes.push(newHole());
+				initialHoleCount = count;
+				holesJustSpawned = true;
+			}
+
+			const HOLE_MIN = 1, HOLE_MAX = 100;
+
+			// Every 5th minute, top up by however many spawned at the start of this preset,
+			// capped at HOLE_MAX. Skipped on the mark that just did the spawn itself.
+			function addMoreHoles(){
+				const toAdd = Math.min(initialHoleCount, HOLE_MAX - holes.length);
+				for(let i = 0; i < toAdd; i++) holes.push(newHole());
+			}
+
+			function tellHoleCount(){
+				snack.className = "show";
+				snack.textContent = "Black holes: " + holes.length;
+				setTimeout(() => snack.className = "", 1000);
+			}
+
+			function nearestHole(m){
+				let best = null, bestDist = Infinity;
+				for(const h of holes){
+					const d = m.distanceTo(h);
+					if(d < bestDist){ bestDist = d; best = h; }
+				}
+				return best;
+			}
+
+			/* ---------- per-frame updates ---------- */
+
+			function updateGlobalVariables(){
+				const now = getDate();
+				min = now.getMinutes();
+				sec = now.getSeconds();
+				tick = sec != lastSecond || firstRun;
+				lastSecond = sec;
+				holesJustSpawned = false;   // true only for the frame spawnHoles ran in
+
+				screenHeight = document.body.clientHeight;
+				screenWidth = document.body.clientWidth;
+				doAnimationOnRePosition = false;
+
+				// Top of the hour: reroll everything, once.
+				if(sec == 0 && min == 0){
+					if(firstFrameOfHour){
+						firstRun = true;
+						changeFuncGroup(0);
+						firstFrameOfHour = false; // for the love of all things holy just run once
+						fx.waitBeforeNextBounce = coin();
 					}
 				} else {
-					// Random
-					if(pastelOnly) dvd.style.color = getNewRandomColorHSL(80);
-					else dvd.style.color = getNewRandomColorHSL(50);
-				}
-			}
-			
-			// Returns a new random X/Y speed factor
-			function getSpeedFactorXY(sf){
-				return minspeed+(sf*Math.random());
-			}
-			
-			// Sets the upper bounds of the next speedfactor calculation. Set the upper bound before the X/Y to limit the speed more consistently
-			function setNewSpeedFactor(){
-				const curmin = min+sec/60.0;
-				
-				speedfactor = (Math.pow(10,-5)*Math.pow(curmin,4)) - (0.0009*Math.pow(curmin,3)) + (0.0262*Math.pow(curmin,2)) - (0.1815*curmin) + 1.0482;
-			}
-			
-			// Next frame
-			function animate() {
-				updateGlobalVariables();
-				updateBG();
-				updateDVD();
-				updateDate();
-				updateBlackHole("DVD");
-				firstRun = false; // gate to refresh animations at the top of the hour
-				window.requestAnimationFrame(animate);
-				isBounceFrame = 0;
-			}
-			
-			function randomBetween(max, min){
-				return Math.random() * (max-min)+min;
-			}
-			
-			// Update background layer animation
-			function updateBG(){
-				pickCSSAnimation("BG", funcGroup);
-			}
-			
-			// ON mouse wheel change, change the min speed
-			function MouseWheelHandler() {
-				// cross-browser wheel delta
-				var e = window.event || e; // old IE support
-				var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
-				
-				var nextGroup = funcGroup + delta + presets.length-1;
-				nextGroup = nextGroup%presets.length;
-				nextGroup++;
-				
-				//console.log("D" + delta + " at " + funcGroup + " next is " + nextGroup);
-				changeFuncGroup(nextGroup);
-				
-				return false;
-			}
-			
-			function changeFuncGroup(preset){
-				
-				bg.style.top = 0;
-				bg.style.left = 0;
-
-				if(min!=59) {
-					let oldgroup = funcGroup;
-					let newgroup = preset;
-					if(preset==0) {
-						newgroup = Math.floor(Math.random()*presets.length+1);
-						if(newgroup==oldgroup) {
-							changeFuncGroup(0);
-							return;
-						}
-					} 
-					
-					//console.log(newgroup + " " + preset);
-					funcGroup = newgroup;
-					firstRun=true;
-					
+					firstFrameOfHour = true;
 				}
 
-				bg.style.transform = "none";
-				dvd.style.transform = "none";
-				bg.style.transform = "translateX(0px) rotate(0deg)"; // Reset and position
-    			bg.style.left = x + "px"; // Set left position
+				clock.tickCountdown();
 
-				bg.style.animation = 'none';
-				bg.offsetHeight; /* trigger reflow */
-				
-				dvd.style.animation = 'none';
-				dvd.offsetHeight; /* trigger reflow */
-				
-				waitBeforeNextBounce = Math.random() < 0.5;
-				
-				// Get the snackbar DIV
-				var snack = document.getElementById("snackbar");
+				// Every 5 minutes, reroll the fonts and give the black hole a new act
+				if((min % 5 == 0 && sec == 0) || firstRun){
+					pickFont(dvd);
+					pickFont(day);
+					rollHolePattern();
+				}
 
-				// Add the "show" class to DIV
-				snack.className = "show";
-				snack.innerHTML = presets[funcGroup-1];
-
-				// After 3 seconds, remove the show class from DIV
-				setTimeout(function(){ snack.className = snack.className.replace("show", ""); }, 1000);
-				
+				// Same 5-minute mark: top up hole count by the initial spawn, unless this
+				// is the same frame that just did a fresh spawn (e.g. top of the hour).
+				if(min % 5 == 0 && sec == 0 && tick && !holesJustSpawned && usesBlackHole(funcGroup))
+					addMoreHoles();
 			}
-			
-			function randomlyRepositionElement(ele){
+
+			// Only write the clamps when they actually change; each write dirties layout.
+			function setWidthClamp(minW, maxW){
+				if(dvd.style.minWidth == minW) return;
+				dvd.style.minWidth = minW;
+				dvd.style.maxWidth = maxW;
+			}
+
+			function updateClock(){
+				dvd.innerText = getDate().toLocaleTimeString(); // 11:18:48 AM
+
+				if(min == 59 || movementType == "CENTER"){
+					setWidthClamp("0px", "10000px");
+					clock.measure();
+					clock.center();
+					if(min == 59) updateColor();
+					clock.place();
+				}
+				else if(movementType == "DVD"){
+					if(dvd.style.display != "table-row") dvd.style.display = "table-row";
+					setWidthClamp("200px", "400px");
+					clock.update();
+				}
+				else if(movementType == "RANDOM"){
+					setWidthClamp("0px", "10000px");
+					if(dvd.style.display != "inline-block") dvd.style.display = "inline-block";
+
+					if(sec != nextRepositionSecond && !firstRun){
+						doReposition = true;
+						return;
+					}
+					if(!doReposition) return;
+
+					randomlyRepositionElement(dvd, 100, 80);
+					doReposition = false;
+
+					repositionInterval = Math.floor((60.0 - (min + sec/60.0))/10.0 + randomBetween(0.25, 2 + 2*Math.sin(min)));
+					if(repositionInterval <= 0) repositionInterval = 1;
+
+					if(doAnimationOnRePosition){
+						dvd.style.animation = 'none';
+						dvd.offsetHeight; /* trigger reflow */
+						dvd.style.animation = 'zoom ' + (1000.0*repositionInterval) + 'ms ' + randomCubicBezier();
+					}
+
+					nextRepositionSecond = (sec + repositionInterval) % 60;
+					if(nextRepositionSecond <= 0) nextRepositionSecond = 2;
+
+					updateColor();
+				}
+			}
+
+			// randomlyRepositionElement works in %, the Mover thinks in px. Read the result
+			// back so the clock chases where the hole actually is, not where it used to be.
+			function syncHoleFromDOM(h){
+				const r = h.el.getBoundingClientRect();
+				h.x = r.left;
+				h.y = r.top;
+				h.measure();
+			}
+
+			// Every 5 minutes every hole picks a new act, together: keep bouncing, or teleport like Zoomies.
+			function rollHolePattern(){
+				holeMode = coin() ? "RANDOM" : "DVD";
+				holeJumpEvery = Math.floor(randomBetween(2, 7));   // seconds between teleports
+
+				for(const h of holes){
+					h.newSpeeds();
+					h.cycleStart = performance.now();
+				}
+
+				if(holeMode == "RANDOM") return;
+				for(const h of holes){
+					h.el.style.right = "";      // % offsets the teleport left behind would fight place()
+					h.el.style.bottom = "";
+					syncHoleFromDOM(h);
+				}
+			}
+
+			function updateBlackHole(){
+				if(holeMode == "RANDOM"){
+					// One shared clock for every hole, so a Zoomies pack teleports in lockstep.
+					let should;
+					if(holeZoomiesMs){
+						const now = performance.now();
+						should = now - lastHoleTeleport >= holeZoomiesMs;
+						if(should) lastHoleTeleport = now;
+					} else {
+						should = tick && sec % holeJumpEvery == 0;
+					}
+					for(const h of holes){
+						// No min==59 recenter: holes keep bouncing through the top of the hour.
+						if(h.el.style.display != "table-row") h.el.style.display = "table-row";
+						if(!should) continue;
+						randomlyRepositionElement(h.el, 100, 100);
+						syncHoleFromDOM(h);
+					}
+					return;
+				}
+				for(const h of holes){
+					if(h.el.style.display != "table-row") h.el.style.display = "table-row";
+					h.update();
+				}
+			}
+
+			function updateDate(){
+				if(fadetimersynch == -1) fadetimersynch = (sec - 3) % 5;
+				if(!tick && min != 59) return;
+
+				if(sec % 5 == fadetimersynch || min == 59){
+					randomlyRepositionElement(day, 100, 100);
+					// Only reanimate every 10 seconds though
+					if(sec % 10 == fadetimersynch){
+						day.style.animation = 'none';
+						day.offsetHeight; /* trigger reflow */
+						day.style.animation = null;
+					}
+				}
+
+				day.textContent = getDate().toLocaleDateString('en-us', { weekday:"long", month:"long", day:"numeric" });
+			}
+
+			function randomlyRepositionElement(ele, minX, minY){
 				ele.style.left = "";
 				ele.style.right = "";
 				ele.style.top = "";
 				ele.style.bottom = "";
-				let fadeX = 100*Math.random();
-				let fadeY = 100*Math.random();						
-				if(fadeX > 50) ele.style.right = (100.0 - fadeX) + "%";
-				else ele.style.left = (fadeX) + "%";
-				if(fadeY > 50) ele.style.bottom = (100.0 - fadeY) + "%";
-				else ele.style.top = (fadeY) + "%";
+
+				const posX = minX * Math.random(), posY = minY * Math.random();
+
+				if(posX > 50) ele.style.right = (100.0 - posX) + "%";
+				else          ele.style.left = posX + "%";
+				if(posY > 50) ele.style.bottom = (100.0 - posY) + "%";
+				else          ele.style.top = posY + "%";
 			}
 
-			function getDate(){
-				var curdate = new Date();
-				//var newyears = new Date(curdate.getTime() + 105*60000);
-				//return newyears;
-				return curdate;
+			/* ---------- preset switching + input ---------- */
+
+			function changeFuncGroup(preset){
+				const prevGroup = funcGroup;
+				if(min != 59){
+					let newgroup = preset;
+					if(preset == 0){
+						newgroup = Math.floor(Math.random() * PRESETS.length + 1);
+						if(newgroup == funcGroup){
+							changeFuncGroup(0);
+							return;
+						}
+					}
+					funcGroup = newgroup;
+					firstRun = true;
+				}
+
+				// Switching modes despawns every black hole; a mode that uses one spawns 1-10 fresh.
+				if(funcGroup != prevGroup)
+					spawnHoles(usesBlackHole(funcGroup) ? Math.floor(randomBetween(11, 1)) : 0);
+
+				holeZoomiesMs = 0;   // only Wobbleton's Turbocharged variant forces fast Zoomies
+
+				bg.style.transform = "translateX(0px) rotate(0deg)"; // Reset and position
+				bg.style.animation = 'none';
+				bg.offsetHeight; /* trigger reflow */
+
+				dvd.style.transform = "none";
+				dvd.style.animation = 'none';
+				dvd.offsetHeight; /* trigger reflow */
+
+				fx.waitBeforeNextBounce = Math.random() < 0.5;
+				fx.wrapX = Math.random() < 0.5;
+				fx.wrapY = Math.random() < 0.5;
+
+				snack.className = "show";
+				snack.textContent = PRESETS[funcGroup - 1];
+				setTimeout(() => snack.className = "", 1000);
 			}
-			
-			// Add events
-			dvd.addEventListener("mouseleave", function (event) {
-				isMouseHover = false;
-			}, false);
-			dvd.addEventListener("mouseover", function (event) {
-				isMouseHover = true;
+
+			// Mouse wheel cycles through the presets
+			window.addEventListener("wheel", e => {
+				const delta = -Math.sign(e.deltaY);
+				changeFuncGroup((funcGroup + delta + PRESETS.length - 1) % PRESETS.length + 1);
+			}, { passive: true });
+
+			// Left click: toggle vertical wrap. Right click: toggle horizontal wrap. Middle
+			// click: the hole picks a new act right now instead of waiting for the 5-minute
+			// mark. preventDefault kills the autoscroll cursor (middle) and the context menu
+			// (right; contextmenu itself is blocked separately below, this just belt-and-braces
+			// the mousedown that precedes it).
+			window.addEventListener("mousedown", e => {
+				if(e.button == 0){
+					fx.wrapY = !fx.wrapY;
+					snack.className = "show";
+					snack.textContent = "Vertical wrap: " + (fx.wrapY ? "on" : "off");
+					setTimeout(() => snack.className = "", 1000);
+				} else if(e.button == 2){
+					e.preventDefault();
+					fx.wrapX = !fx.wrapX;
+					snack.className = "show";
+					snack.textContent = "Horizontal wrap: " + (fx.wrapX ? "on" : "off");
+					setTimeout(() => snack.className = "", 1000);
+				} else if(e.button == 1){
+					e.preventDefault();
+					rollHolePattern();
+					snack.className = "show";
+					snack.textContent = "Black hole: " + (holeMode == "RANDOM" ? "Zoomies" : "Bouncing");
+					setTimeout(() => snack.className = "", 1000);
+				}
 			}, false);
 
-			window.addEventListener("mousewheel", MouseWheelHandler, false);
-			
+			// Right click shouldn't pop up the browser's context menu.
+			window.addEventListener("contextmenu", e => e.preventDefault(), false);
+
+			// Space: toggle fullscreen.
+			window.addEventListener("keydown", e => {
+				if(e.code != "Space") return;
+				e.preventDefault();
+				if(document.fullscreenElement) document.exitFullscreen();
+				else document.documentElement.requestFullscreen().catch(() => {});
+			}, false);
+
+			dvd.addEventListener("mouseleave", () => isMouseHover = false, false);
+			dvd.addEventListener("mouseover", () => isMouseHover = true, false);
+
+			// Pause/Break toggles hitbox outlines
+			window.addEventListener("keyup", e => {
+				if(e.code != "Pause") return;
+				e.preventDefault();
+				debugmode = !debugmode;
+				bg.style.border  = debugmode ? "4px solid #00CCFF" : "none";
+				hitbox.style.border  = debugmode ? "2px solid red" : "none";
+				hitbox.style.display = debugmode ? "block" : "none";
+				for(const h of holes) h.el.style.border = debugmode ? "2px solid green" : "none";
+			}, false);
+
+			// Up/Down: add or remove a black hole by hand, whatever the preset rolled.
+			window.addEventListener("keydown", e => {
+				if(e.code != "ArrowUp" && e.code != "ArrowDown") return;
+				e.preventDefault();
+
+				if(e.code == "ArrowUp" && holes.length < HOLE_MAX){
+					holes.push(newHole());
+				} else if(e.code == "ArrowDown" && holes.length > HOLE_MIN){
+					holes.pop().el.remove();
+				}
+				tellHoleCount();
+			}, false);
+
+			/* ---------- frame loop ---------- */
+
+			function animate() {
+				window.requestAnimationFrame(animate);   // first, so a thrown error can't kill the clock
+
+				updateGlobalVariables();
+				if(tick){
+					// Presets only ever read min/sec/firstRun, so once a second is enough.
+					pickCSSAnimation(bg, funcGroup);
+					pickCSSAnimation(dvd, funcGroup);
+				}
+				updateClock();
+				updateDate();
+				updateBlackHole();
+				if(debugmode){
+					// RANDOM mode positions dvd via left/right/top/bottom %, not the Mover -
+					// clock.x/y/w/h are stale then, so there's nothing meaningful to outline.
+					hitbox.style.display = movementType == "RANDOM" ? "none" : "block";
+					hitbox.style.left    = clock.x + "px";
+					hitbox.style.top     = clock.y + "px";
+					hitbox.style.width   = clock.w + "px";
+					hitbox.style.height  = clock.h + "px";
+				}
+				firstRun = false; // gate to refresh animations at the top of the hour
+			}
 		</script>
-		
-		<!-- CSS animations -->
+
+		<!-- CSS animation presets: one function per group, per element -->
 		<script>
+			const randomCubicBezier = () =>
+				'cubic-bezier(' + Math.random() + ',' + randomBetween(-1.5,1.5) + ',' + Math.random() + ',' + randomBetween(-1.5,1.5) + ')';
+
+			function randABCD(){
+				a2 = Math.random(); b2 = Math.random(); c2 = Math.random(); d2 = Math.random();
+			}
+
+			// bg6synch 1..16 are the 16 corners of the bezier unit cube, in binary.
+			// Anything else means "use the shared random curve" (bg picks it, dvd echoes it).
+			const bezierFor = n => (n >= 1 && n <= 16)
+				? [(n-1) >> 3 & 1, (n-1) >> 2 & 1, (n-1) >> 1 & 1, (n-1) & 1]
+				: [a2, b2, c2, d2];
+
+			const rotAnim = (name, n) => name + ' ' + (60-min+5) + 's cubic-bezier(' + bezierFor(n).join(', ') + ') infinite';
+
+			function rotVarAnim(ele, name, seconds){
+				ele.style.setProperty("--from-rot", Math.floor(randomBetween(0,720)) + "deg");
+				ele.style.setProperty("--to-rot", Math.floor(randomBetween(0,720)) + "deg");
+				randABCD();
+				ele.style.animation = name + ' ' + seconds + 's cubic-bezier(' + [a2,b2,c2,d2].join(', ') + ') infinite';
+			}
+
+			const QUARTER = () => sec % 15 == 0 || firstRun;
+
 			// Runs an element through the animation picker function
-			function pickCSSAnimation(whichone, grp){
-				if(min==59){
-					if(sec==0 || firstRun){
+			function pickCSSAnimation(ele, grp){
+				if(min == 59){
+					if(sec == 0 || firstRun){
 						bg.style.animation = 'none';
-						dvd.style.animation = 'bigzoom 60s ease-in'; 
+						dvd.style.animation = 'bigzoom ' + (60-sec) + 's ease-in infinite';
+						dvd.style.display = "flex";
 						bg.offsetHeight; /* trigger reflow */
-						dvd.offsetHeight; /* trigger reflow */
+						dvd.offsetHeight;
 					}
+					return;
 				}
-				else
-				{
-					if(whichone=="dvd"){
-						switch (grp) {
-							case 1:
-								updateDVDAnimationFunction1(dvd);
-								break;
-							case 2:
-								updateDVDAnimationFunction2(dvd);
-								break;
-							case 3:
-								updateDVDAnimationFunction3(dvd);
-								break;
-							case 4:
-								updateDVDAnimationFunction4(dvd);
-								break;
-							case 5:
-								updateDVDAnimationFunction5(dvd);
-								break;
-							case 6:
-								updateDVDAnimationFunction6(dvd);
-								break;
-							case 7:
-								updateDVDAnimationFunction7(dvd);
-								break;
-							case 8:
-								updateDVDAnimationFunction8(dvd);
-								break;
-							case 9:
-								updateDVDAnimationFunction9(dvd);
-								break;
-							case 10:
-								updateDVDAnimationFunction10(dvd);
-								break;
-							case 11:
-								updateDVDAnimationFunction11(dvd);
-								break;
-							
-						}
-						dvd.offsetHeight; /* trigger reflow */
-					} else {
-						switch (grp) {
-							case 1:
-								updateBGAnimationFunction1(bg);
-								break;
-							case 2:
-								updateBGAnimationFunction2(bg);
-								break;
-							case 3:
-								updateBGAnimationFunction3(bg);
-								break;
-							case 4:
-								updateBGAnimationFunction4(bg);
-								break;
-							case 5:
-								updateBGAnimationFunction5(bg);
-								break;
-							case 6:
-								updateBGAnimationFunction6(bg);
-								break;
-							case 7:
-								updateBGAnimationFunction7(bg);
-								break;
-							case 8:
-								updateBGAnimationFunction8(bg);
-								break;
-							case 9:
-								updateBGAnimationFunction9(bg);
-								break;
-							case 10:
-								updateBGAnimationFunction10(bg);
-								break;
-							case 11:
-								updateBGAnimationFunction11(bg);
-								break;
-						}
-						bg.offsetHeight; /* trigger reflow */
-					}
-				}
+
+				dvd.style.display = "table-row";
+				const fn = (ele === dvd ? DVD_ANIM : BG_ANIM)[grp - 1];
+				if(fn) fn(ele);
+				ele.offsetHeight; /* trigger reflow */
 			}
 
-			// Stays calm for 45 minutes, 
-			// then does a huge rotation every 5 seconds until the last minute
-			function updateDVDAnimationFunction1(ele){
+			/* ----- clock presets ----- */
+
+			// Stays calm for 15 minutes, then zooms in bands until the last minute
+			function dvd1(ele){
 				movementType = "DVD";
-				
-				aimForCorners = false;
-				edgesGoFastInstead = false;
-				speedUpFasterFromEdges = false;
-				gravityWell = false;
-				doAccelleration = false;
-				useSineWaveOffset = false;
-				useCubicAcceleration = false;
-				
-				// at the top of any minute,
-				if(sec==0 || firstRun){
-					if(min<15){
-						ele.style.animation = 'none';
-					} else if (min<30) {
-						ele.style.animation = 'zoomy 2s linear infinite alternate';
-					} else if (min<45) {
-						ele.style.animation = null;
-					} else if (min<50) {
-						ele.style.animation = 'none';
-					} else if (min<55){
-						ele.style.animation = 'zoomy 2s linear infinite alternate';
-					} else {
-						ele.style.animation = null; 
-					} 
-				}
+				setFX(NO_MOTION);
+
+				if(sec != 0 && !firstRun) return;
+				if(min < 15)      ele.style.animation = 'none';
+				else if(min < 30) ele.style.animation = 'zoomy 2s linear infinite alternate';
+				else if(min < 45) ele.style.animation = null;
+				else if(min < 50) ele.style.animation = 'none';
+				else if(min < 55) ele.style.animation = 'zoomy 2s linear infinite alternate';
+				else              ele.style.animation = null;
 			}
-			
-			// Rotates around the screen in different patterns in synch with another element inversing it
-			// Rotation speed increases as we get closer to the top of the hour
-			function updateDVDAnimationFunction2(ele){
+
+			// One easing curve per 10 minutes; the last band uses the shared random curve
+			const FN2_CURVES = ["0, 1, 1, 0", "1, 0, 0, 1", "0, 1, 0, 1", "1, 0, 1, 0", ".25, 2, .75, -1"];
+			const fn2Curve = () => FN2_CURVES[Math.floor(min/10)] || [a2,b2,c2,d2].join(', ');
+
+			// Rotates in synch with the background inversing it. Faster near the top of the hour.
+			function dvd2(ele){
 				movementType = "DVD";
-				
-				aimForCorners = false;
-				edgesGoFastInstead = false;
-				speedUpFasterFromEdges = false;
-				gravityWell = false;
-				doAccelleration = false;
-				useSineWaveOffset = false;
-				useCubicAcceleration = false;
-				
-				// at the top of any minute,
-				if(sec==0 || firstRun){
-					if(min<10){
-						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 0) infinite';
-					} else if (min < 20) {
-						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 1) infinite';
-					} else if (min < 30) {
-						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 1) infinite';
-					} else if (min < 40) {
-						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 0) infinite';
-					} else if (min < 50) {
-						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(.25, 2, .75, -1) infinite';
-					} else {
-						ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
-					}
-				}
+				setFX(NO_MOTION);
+
+				if(sec != 0 && !firstRun) return;
+				ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(' + fn2Curve() + ') infinite';
 			}
-			
-			// Rotates around the screen in different patterns in synch with another element inversing it
-			// Rotation speed increases as we get closer to the top of the hour
-			function updateDVDAnimationFunction3(ele){
-				aimForCorners = false;
-				edgesGoFastInstead = false;
-				speedUpFasterFromEdges = false;
-				gravityWell = false;
-				doAccelleration = false;
+
+			// Teleports to a random spot every few seconds
+			function dvd3(ele){
+				setFX(NO_MOTION);
 				movementType = "RANDOM";
+				ele.style.display = "flex";
 				doAnimationOnRePosition = true;
-				useSineWaveOffset = false;
-				useCubicAcceleration = false;
 			}
-			
-			// Rotates around the screen in different patterns in synch with another element inversing it
-			// Rotation speed increases as we get closer to the top of the hour
-			function updateDVDAnimationFunction4(ele){
-				aimForCorners = false;
-				edgesGoFastInstead = false;
-				speedUpFasterFromEdges = false;
-				gravityWell = false;
-				doAccelleration = false;
-				useSineWaveOffset = false;
-				useCubicAcceleration = false;
-				
-				if(min%2==0)
-					movementType = "DVD";
-				else
-					movementType = "RANDOM";
-				
-				// at the top of any minute,
-				if(sec%15==0 || firstRun){
-					if(gate4){
-						ele.setAttribute("style", "--from-rot: " + Math.floor(randomBetween(0,720)) + "deg");
-						ele.setAttribute("style", "--to-rot: " + Math.floor(randomBetween(0,720)) + "deg");
-						let seconds = Math.floor(Math.random()*5+5)
-						a2=Math.random();
-						b2=Math.random();
-						c2=Math.random();
-						d2=Math.random();
-						ele.style.animation = 'rot1 ' + seconds + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
-						gate4 = false;
-					}
-				} else {
-					gate4 = true;
-				}
+
+			// Alternates bouncing and teleporting minute by minute, spinning to a random target angle
+			let gate4 = true;
+			function dvd4(ele){
+				setFX(NO_MOTION);
+				movementType = min % 2 == 0 ? "DVD" : "RANDOM";
+
+				if(!QUARTER()){ gate4 = true; return; }
+				if(!gate4) return;
+
+				rotVarAnim(ele, 'rot1', Math.floor(Math.random()*5 + 5));
+				gate4 = false;
 			}
-			
-			// aim for corners. Add gravity well after 30 minutes
-			function updateDVDAnimationFunction5(ele){
+
+			// Aim for corners. Add a gravity well after 30 minutes.
+			function dvd5(ele){
 				movementType = "DVD";
-				aimForCorners = true;
-				doAccelleration = false;
-				useSineWaveOffset = false;
-				useCubicAcceleration = false;
-				
+				setFX({ aimForCorners: true, doAcceleration: false, doDeceleration: false,
+				        useSineWaveOffset: false, useCubicAcceleration: false });
 				ele.style.animation = 'none';
-				// at the top of any minute,
-				if(sec==0 || firstRun){
-					speedUpFasterFromEdges = true;
-					
-					if (min < 12) {
-						speedUpFasterFromEdges = false;
-						edgesGoFastInstead = false;
-						gravityWell = false;
-					} else if (min<24) {
-						edgesGoFastInstead = true;
-						gravityWell = false;
-					} else if (min<36) {
-						edgesGoFastInstead = false;
-						gravityWell = false;
-					} else if (min<48) {
-						edgesGoFastInstead = true;
-						gravityWell = true;
-					} else {
-						edgesGoFastInstead = false;
-						gravityWell = true;
-					}
-				}
+
+				if(sec != 0 && !firstRun) return;
+				setFX({
+					speedUpFasterFromEdges: min >= 12,
+					edgesGoFastInstead: min >= 12 && min < 24 || min >= 36 && min < 48,
+					gravityWell: min >= 36,
+				});
 			}
-			
-			// RANDOM
-			function updateDVDAnimationFunction6(ele){
+
+			// RANDOM: reroll every modifier every minute
+			function dvd6(ele){
 				movementType = "DVD";
 
-				// at the top of any minute,
-				if(sec==0 || firstRun){
-					speedUpFasterFromEdges = false;
-					aimForCorners = false;
-					// Pick modifiers
-					switch(Math.floor(randomBetween(0,4))){
-						case 0:
-							speedUpFasterFromEdges = true;
-							aimForCorners = true;
-							break;
-						case 1:
-							aimForCorners = true;
-							break;
-						case 2:
-							speedUpFasterFromEdges = true;
-							break;
-					}
-					// What are we doing?
-					if(speedUpFasterFromEdges){
-						edgesGoFastInstead = false;
-						gravityWell = false;
-						switch(Math.floor(randomBetween(0,4))){
-							case 0:
-								edgesGoFastInstead = false;
-								gravityWell = false;
-								break;
-							case 1:
-								edgesGoFastInstead = true;
-								gravityWell = false;
-								break;
-							case 2:
-								edgesGoFastInstead = false;
-								gravityWell = true;
-								break;
-							case 3:
-								edgesGoFastInstead = true;
-								gravityWell = true;
-								break;
-						}
-					}
-					// Are we extra bouncy?
-					switch(Math.floor(randomBetween(0,2))){
-						case 0:
-							oneInThisChanceOfChanging = 500;
-							break;
-						default:
-							oneInThisChanceOfChanging = 10000000;
-							break;
-					}
-					switch(Math.floor(randomBetween(0,2))){
-						case 0:
-							useSineWaveOffset = false;
-							break;
-						default:
-							useSineWaveOffset = true;
-							break;
-					}
-					switch(Math.floor(randomBetween(0,2))){
-						case 0:
-							useCubicAcceleration = false;
-							break;
-						default:
-							useCubicAcceleration = true;
-							break;
-					}
-					switch(Math.floor(randomBetween(0,2))){
-						case 0:
-							doAccelleration = true;
-							break;
-						default:
-							doAccelleration = false;
-							break;
-					}
-					if(bg6synch==0){
-						switch(Math.floor(randomBetween(0,10))){
-							case 0:
-								ele.style.animation = 'none';
-								break;
-							case 1:
-								ele.style.animation = 'zoomy 2s linear infinite alternate';
-								break;
-							case 1:
-								ele.style.animation = null;
-								break;
-							case 2:
-								if(gate4 || firstRun){
-									ele.setAttribute("style", "--from-rot: " + Math.floor(randomBetween(0,720)) + "deg");
-									ele.setAttribute("style", "--to-rot: " + Math.floor(randomBetween(0,720)) + "deg");
-									let seconds = Math.floor(Math.random()*5+5)
-									a2=Math.random();
-									b2=Math.random();
-									c2=Math.random();
-									d2=Math.random();
-									ele.style.animation = 'rot1 ' + seconds + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
-									gate4 = false;
-								}
-								break;
-						}
-					} else {
-						console.log('bg6synch = '+ bg6synch);
-						
-						switch(bg6synch){
-							case 1:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 0, 0) infinite';
-								break;
-							case 2:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 0, 1) infinite';
-								break;
-							case 3:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 1, 0) infinite';
-								break;
-							case 4:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 1, 1) infinite';
-								break;
-							case 5:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 0) infinite';
-								break;
-							case 6:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 1) infinite';
-								break;
-							case 7:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 0) infinite';
-								break;
-							case 8:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 1) infinite';
-								break;
-							case 9:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 0) infinite';
-								break;
-							case 10:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 1) infinite';
-								break;
-							case 11:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 0) infinite';
-								break;
-							case 12:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 1) infinite';
-								break;
-							case 13:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 0, 0) infinite';
-								break;
-							case 14:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 0, 1) infinite';
-								break;
-							case 15:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 1, 0) infinite';
-								break;
-							case 16:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 1, 1) infinite';
-								break;
-							default:
-								ele.style.animation = 'annoyingrotation ' + (60-min+5) + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
-								break;
-						}
-					}
-				} else {
-					gate4 = true;
+				if(sec != 0 && !firstRun){ gate4 = true; return; }
+
+				// Pick modifiers
+				setFX({ ...NO_MOTION });
+				switch(Math.floor(randomBetween(0,4))){
+					case 0: setFX({ speedUpFasterFromEdges: true, aimForCorners: true }); break;
+					case 1: setFX({ aimForCorners: true }); break;
+					case 2: setFX({ speedUpFasterFromEdges: true }); break;
 				}
-			}
-			
-			// Rotates around the screen in different patterns in synch with another element inversing it
-			// Rotation speed increases as we get closer to the top of the hour
-			function updateDVDAnimationFunction7(ele){
-				updateDVDAnimationFunction1(ele);
-				speedUpFasterFromEdges = true;
-				aimForCorners = false;
-				doAccelleration = false;
-				useSineWaveOffset = false;
-				useCubicAcceleration = false;
-				switch(min%4){
+				// What are we doing?
+				if(fx.speedUpFasterFromEdges) setFX({ edgesGoFastInstead: coin(), gravityWell: coin() });
+
+				setFX({
+					useSineWaveOffset: !coin(),
+					useCubicAcceleration: !coin(),
+					doAcceleration: coin(),
+					doDeceleration: coin(),
+					wrapX: coin(),
+					wrapY: coin(),
+				});
+
+				// One reroll in five, throw a black hole into the mix too (Wobbleton's roulette).
+				if(Math.floor(randomBetween(0,5)) == 0){
+					if(!holes.length) spawnHoles(Math.floor(randomBetween(1,10)));
+					setFX({ trigChase: true, pullTowardBH: randomItem(BH_MODES), waitBeforeNextBounce: false });
+				} else if(holes.length){
+					despawnHoles();
+				}
+
+				if(bg6synch != 0){
+					ele.style.animation = rotAnim('annoyingrotation', bg6synch);
+					return;
+				}
+				switch(Math.floor(randomBetween(0,10))){   // 7 in 10: leave the animation alone
 					case 0:
-						edgesGoFastInstead = false;
-						gravityWell = false;
+						ele.style.animation = 'none';
 						break;
 					case 1:
-						edgesGoFastInstead = true;
-						gravityWell = false;
+						ele.style.animation = 'zoomy 2s linear infinite alternate';
 						break;
 					case 2:
-						edgesGoFastInstead = false;
-						gravityWell = true;
-						break;
-					case 3:
-						edgesGoFastInstead = true;
-						gravityWell = true;
+						if(gate4 || firstRun){
+							rotVarAnim(ele, 'rot1', Math.floor(Math.random()*5 + 5));
+							gate4 = false;
+						}
 						break;
 				}
 			}
-			
-			function updateDVDAnimationFunction8(ele){
-				movementType = "DVD";
-				
-				aimForCorners = false;
-				edgesGoFastInstead = false;
-				speedUpFasterFromEdges = false;
-				gravityWell = false;
-				doAccelleration = true;
-				useSineWaveOffset = false;
-				useCubicAcceleration = false;
-				
-				// at the top of any minute,
-				//if(sec==0 || firstRun){
-				//	if(min<15){
-				//		ele.style.animation = 'none';
-				//	} else if (min<30) {
-				//		ele.style.animation = 'zoomy 2s linear infinite alternate';
-				//	} else if (min<45) {
-				//		ele.style.animation = null;
-				//	} else if (min<50) {
-				//		ele.style.animation = 'none';
-				//	} else if (min<55){
-				//		ele.style.animation = 'zoomy 2s linear infinite alternate';
-				//	} else {
-				//		ele.style.animation = null; 
-				//	} 
-				//}
-			}
-			
-			function updateDVDAnimationFunction9(ele){
-				movementType = "DVD";
-				useSineWaveOffset = false;
-				useCubicAcceleration = false;
-				
-				// at the top of any minute,
-				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
-					if(drunkardReset){
-						ele.style.animation = 'inversedrunkard ' + ((60-min+5)/drunkardFactor) + 's cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ') infinite reverse';
-						//console.log('cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ')');
-						drunkardReset = false;
-						let casestatement = Math.round(Math.random()*10);
-						console.log(casestatement);
-						switch(casestatement){
-							case 0:
-								aimForCorners = false;
-								edgesGoFastInstead = false;
-								speedUpFasterFromEdges = true;
-								gravityWell = false;
-								doAccelleration = false;
-								break;
-							case 1:
-								aimForCorners = true;
-								edgesGoFastInstead = false;
-								speedUpFasterFromEdges = false;
-								gravityWell = false;
-								doAccelleration = false;
-								break;
-							case 2:
-								aimForCorners = false;
-								edgesGoFastInstead = false;
-								speedUpFasterFromEdges = false;
-								gravityWell = true;
-								doAccelleration = false;
-								break;
-							case 3:
-								aimForCorners = false;
-								edgesGoFastInstead = true;
-								speedUpFasterFromEdges = false;
-								gravityWell = true;
-								doAccelleration = false;
-								break;
-							default:
-								aimForCorners = false;
-								edgesGoFastInstead = false;
-								speedUpFasterFromEdges = false;
-								gravityWell = false;
-								doAccelleration = false;
-								break;
-						}
-					}
-				} 
-			}
-			
-			function updateDVDAnimationFunction10(ele){
-				movementType = "DVD";
 
-				useSineWaveOffset = true;
+			// dvd1 plus a gravity well that flips mode every minute
+			function dvd7(ele){
+				dvd1(ele);
+				setFX({
+					speedUpFasterFromEdges: true,
+					edgesGoFastInstead: min % 2 == 1,
+					gravityWell: min % 4 >= 2,
+				});
+			}
 
-				speedUpFasterFromEdges = false;
-				edgesGoFastInstead = false;
-				gravityWell = false;
-				aimForCorners = false;
-				speedUpFasterFromEdges = false;
-				waitBeforeNextBounce = false;
-				useCubicAcceleration = min>30&&(min-2)%10<=3;
-				doAccelleration = min%10>=5;
-				
-				// if(sec==0 || firstRun){
-				// 	if(min<45){
-				// 		ele.style.animation = 'none';
-				// 	} else if (min<50) {
-				// 		ele.style.animation = 'zoomy 2s linear infinite alternate';
-				// 	} else if (min<55) {
-				// 		ele.style.animation = null;
-				// 	}
-				// }
-				
-				if(min>50 && (sec%5==0 || firstRun)){
-					dvd.style.animation = 'none'; 
+			function dvd8(ele){
+				movementType = "DVD";
+				setFX({ ...NO_MOTION, doAcceleration: true });
+			}
+
+			// Lurching drunkard. Rerolls its physics every 15 seconds.
+			function dvd9(ele){
+				movementType = "DVD";
+				setFX({ useSineWaveOffset: false, useCubicAcceleration: false, doDeceleration: false });
+
+				if(!QUARTER() || !drunkardReset) return;
+
+				ele.style.animation = 'inversedrunkard ' + ((60-min+5)/drunkardFactor) + 's cubic-bezier('
+					+ [drunkardA, drunkardB, drunkardC, drunkardD].join(',') + ') infinite reverse';
+				drunkardReset = false;
+
+				setFX({ ...NO_MOTION });
+				switch(Math.round(Math.random()*10)){
+					case 1: setFX({ aimForCorners: true }); break;
+					case 0: setFX({ speedUpFasterFromEdges: true }); break;
+					case 2: setFX({ gravityWell: true }); break;
+					case 3: setFX({ gravityWell: true, edgesGoFastInstead: true }); break;
+				}
+			}
+
+			// Fly in a jar: sine wandering, with acceleration phases
+			function dvd10(ele){
+				movementType = "DVD";
+				setFX({
+					...NO_MOTION,
+					useSineWaveOffset: true,
+					useCubicAcceleration: min > 30 && (min-2) % 10 <= 3,
+					doAcceleration: min % 10 >= 5,
+					waitBeforeNextBounce: false,
+				});
+
+				if(min > 50 && (sec % 5 == 0 || firstRun)){
+					dvd.style.animation = 'none';
 					dvd.offsetHeight; /* trigger reflow */
-					dvd.style.animation = 'flyzoom 4s cubic-bezier(' + Math.random() + ',' + randomBetween(-1.5,1.5) + ',' + Math.random() + ',' + randomBetween(-1.5,1.5) + ') infinite alternate';
+					dvd.style.animation = 'flyzoom 4s ' + randomCubicBezier() + ' infinite alternate';
 				}
 			}
 
-			function updateDVDAnimationFunction11(ele){
+			const DRUNK_ANIMS = ["drunkard ", "wiggle ", "rotation ", "annoyingrotation "];
+
+			// Two shots of vodka: bezier swerves plus a random wobble animation
+			function dvd11(ele){
 				movementType = "DVD";
+				setFX({ ...NO_MOTION, useCubicAcceleration: true, waitBeforeNextBounce: false });
 
-				useSineWaveOffset = false;
+				if(!QUARTER() || !drunkardReset) return;
 
-				speedUpFasterFromEdges = false;
-				edgesGoFastInstead = false;
-				gravityWell = false;
-				aimForCorners = false;
-				speedUpFasterFromEdges = false;
-				waitBeforeNextBounce = false;
-				doAccelleration = false;
-				useCubicAcceleration = true;
+				rollDrunkard();
+				ele.style.animation = drunkardFunction + (60-min+5) + 's cubic-bezier('
+					+ [drunkardA, drunkardB, drunkardC, drunkardD].join(',') + ') infinite reverse';
+				drunkardReset = false;
+			}
 
-				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
-					if(drunkardReset){
-						drunkardA = Math.round(Math.random()*1000)/1000;
-						drunkardB = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
-						drunkardC = Math.round(Math.random()*1000)/1000;
-						drunkardD = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
-						switch(Math.round(randomBetween(0,min/15.0))){
-							case 0:
-								drunkardFunction = "drunkard "
-								break;
-							case 1:
-								drunkardFunction = "wiggle "
-								break;
-							case 2:
-								drunkardFunction = "rotation "
-								break;
-							case 3:
-								drunkardFunction = "annoyingrotation "
-								break;
-						}
-						
-						ele.style.animation = drunkardFunction + ((60-min+5)) + 's cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ') infinite reverse';
-						drunkardReset = false;
-					}
-				}
+			// Speeding trap: coast, then brake
+			function dvd12(ele){
+				movementType = "DVD";
+				setFX({ ...NO_MOTION, doDeceleration: true });
+
+				if(sec != 0 && min <= 55 && !firstRun) return;
+				setFX({ useCubicAcceleration: !coin() });
+				fx.waitBeforeNextBounce = !coin();
 			}
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			// Stays calm for 15 minutes, 
-			// starts zooming in and out for 15, 
-			// then wiggles and zooms for 15, 
-			// calms again for 5, zooms again for 5, 
-			// wiggles and zooms again for 4, 
-			// then the last minute it increases in size dramatically.
-			function updateBGAnimationFunction1(ele){
-				// at the top of any minute,
-				if(sec==0 || firstRun){
-					if(min<45){
-						ele.style.animation = 'none';
-					} else {
-						ele.style.animation = 'rotation 5s cubic-bezier(.6, .8, .4, .2) infinite';
-					} 
-				}
+
+			// Moth to a flame: full throttle at the black hole, no brakes, sails right past it.
+			function dvd13(ele){
+				movementType = "DVD";
+				setFX({ ...NO_MOTION, pullTowardBH: "thrust", waitBeforeNextBounce: false });
+
+				if(sec != 0 && !firstRun) return;
+				if(firstRun){ clock.newSpeeds(); clock.rollChaseAccel(); }   // a kick to start with; bounces are elastic from here
+				ele.style.animation = 'none';
 			}
-			
-			// Rotates around the screen in different patterns in synch with another element inversing it
-			// Rotation speed increases as we get closer to the top of the hour
-			function updateBGAnimationFunction2(ele){
-				// at the top of any minute,
-				if(sec==0 || firstRun){
-					if(min<10){
-						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 0) infinite';
-					} else if (min < 20) {
-						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 1) infinite';
-					} else if (min < 30) {
-						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 1) infinite';
-					} else if (min < 40) {
-						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 0) infinite';
-					} else if (min < 50) {
-						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(.25, 2, .75, -1) infinite';
-					} else {
-						a2=Math.random();
-						b2=Math.random();
-						c2=Math.random();
-						d2=Math.random();
-						ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
-					}
-				}
-			}
-			
-			// Rotates around the screen in different patterns in synch with another element inversing it
-			// Rotation speed increases as we get closer to the top of the hour
-			function updateBGAnimationFunction3(ele){
+
+			// Spaghettification: inverse-square gravity, gentle far out, brutal up close.
+			function dvd14(ele){
+				movementType = "DVD";
+				setFX({ ...NO_MOTION, pullTowardBH: "gravity", waitBeforeNextBounce: false });
+
+				if(sec != 0 && !firstRun) return;
+				if(firstRun){ clock.newSpeeds(); clock.rollChaseAccel(); }
 				ele.style.animation = 'wiggle 10s ease-in-out infinite alternate';
 			}
-			
-			// Rotates around the screen in different patterns in synch with another element inversing it
-			// Rotation speed increases as we get closer to the top of the hour
-			function updateBGAnimationFunction4(ele){
-				
-				// at the top of any minute,
-				if(sec%15==0 || firstRun){
-					if(gate4){
-						ele.setAttribute("style", "--from-rot: " + Math.floor(randomBetween(0,720)) + "deg");
-						ele.setAttribute("style", "--to-rot: " + Math.floor(randomBetween(0,720)) + "deg");
-						let seconds = Math.floor(randomBetween(5,15))
-						a2=Math.random();
-						b2=Math.random();
-						c2=Math.random();
-						d2=Math.random();
-						ele.style.animation = 'rot1p ' + seconds + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
-					}
-				}
-			}
-			
-			// 
-			function updateBGAnimationFunction5(ele){
-				
-			}
-			
-			// RANDOM
-			function updateBGAnimationFunction6(ele){
-				// at the top of any minute,
-				if(sec==0 || firstRun){
-					bg6synch = 0;
-					
-					if(Math.floor(randomBetween(0,2))==0) bg6synch = Math.floor(randomBetween(1,25));
-					
-					console.log('bg6synch = '+ bg6synch);
-					
-					switch(bg6synch){
-						case 0:
-							ele.style.animation = null;
-							
-							if(Math.floor(randomBetween(0,2))==0){
-								if(Math.floor(randomBetween(0,2))==0) ele.style.animation = 'wiggle 10s ease-in-out infinite alternate';
-								else ele.style.animation = 'none';
-							} else {
-								ele.setAttribute("style", "--from-rot: " + Math.floor(randomBetween(0,720)) + "deg");
-								ele.setAttribute("style", "--to-rot: " + Math.floor(randomBetween(0,720)) + "deg");
-								let seconds = Math.floor(randomBetween(5,15))
-								a2=Math.random();
-								b2=Math.random();
-								c2=Math.random();
-								d2=Math.random();
-								ele.style.animation = 'rot1p ' + seconds + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
-							} 
-							break;
-						case 1:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 0, 0) infinite';
-							break;
-						case 2:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 0, 1) infinite';
-							break;
-						case 3:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 1, 0) infinite';
-							break;
-						case 4:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 0, 1, 1) infinite';
-							break;
-						case 5:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 0) infinite';
-							break;
-						case 6:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 0, 1) infinite';
-							break;
-						case 7:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 0) infinite';
-							break;
-						case 8:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(0, 1, 1, 1) infinite';
-							break;
-						case 9:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 0) infinite';
-							break;
-						case 10:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 0, 1) infinite';
-							break;
-						case 11:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 0) infinite';
-							break;
-						case 12:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 0, 1, 1) infinite';
-							break;
-						case 13:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 0, 0) infinite';
-							break;
-						case 14:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 0, 1) infinite';
-							break;
-						case 15:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 1, 0) infinite';
-							break;
-						case 16:
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(1, 1, 1, 1) infinite';
-							break;
-						default:
-							a2=Math.random();
-							b2=Math.random();
-							c2=Math.random();
-							d2=Math.random();
-							ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(' + a2 + ', ' + b2 + ', ' + c2 + ', ' + d2 + ') infinite';
-							break;
-					}
-				}
-			}
-			
-			function updateBGAnimationFunction7(ele){
-				updateBGAnimationFunction1(ele);
-			}
-			
-			// 
-			function updateBGAnimationFunction8(ele){
-				
+
+			// Restraining order: constant thrust directly away, no brakes. Lives on the walls.
+			function dvd15(ele){
+				movementType = "DVD";
+				setFX({ ...NO_MOTION, pullTowardBH: "shove", waitBeforeNextBounce: false });
+
+				if(sec != 0 && !firstRun) return;
+				if(firstRun){ clock.newSpeeds(); clock.rollChaseAccel(); }
+				ele.style.animation = 'none';
 			}
 
-			function updateBGAnimationFunction9(ele){
-				// at the top of any minute,
-				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
-					if(drunkardReset)
-					{
-						drunkardA = Math.round(Math.random()*1000)/1000;
-						drunkardB = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
-						drunkardC = Math.round(Math.random()*1000)/1000;
-						drunkardD = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
-						ele.style.animation = 'drunkard ' + ((60-min+5)/drunkardFactor) + 's cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ') infinite reverse';
-					}
+			// White hole: inverse-square outward. Drifts free until it strays too close, then it's launched.
+			function dvd16(ele){
+				movementType = "DVD";
+				setFX({ ...NO_MOTION, pullTowardBH: "whitehole", waitBeforeNextBounce: false });
+
+				if(sec != 0 && !firstRun) return;
+				if(firstRun){ clock.newSpeeds(); clock.rollChaseAccel(); }
+				ele.style.animation = 'none';
+			}
+
+			// Sir Wobbleton's: every wall reroll picks one of the four hole modes at random,
+			// and the pull strength rides a random trig shape, so it breathes and even reverses.
+			function dvd17(ele){
+				movementType = "DVD";
+				// This runs every second and NO_MOTION wipes the mode; the wall picks it, not the clock.
+				const keep = fx.pullTowardBH || randomItem(BH_MODES);
+				setFX({ ...NO_MOTION, trigChase: true, pullTowardBH: keep, waitBeforeNextBounce: false });
+
+				if(sec != 0 && !firstRun) return;
+				if(firstRun){ clock.newSpeeds(); clock.rollChaseAccel(); clock.rollTrigChase(); }
+				ele.style.animation = 'none';
+			}
+
+			// Same roulette as Wobbleton's, but the hole never stops teleporting (Zoomies,
+			// forced every tick so the 5-minute pattern roll can't switch it back to bouncing)
+			// and every wall reroll spins the pull's strength 1x-10x, not just its mode.
+			function dvd18(ele){
+				movementType = "DVD";
+				const keep = fx.pullTowardBH || randomItem(BH_MODES);
+				const mul = fx.chaseAccelRandom ? fx.chaseAccelMul : randomBetween(0.25, 5);
+				setFX({ ...NO_MOTION, trigChase: true, pullTowardBH: keep, chaseAccelMul: mul, chaseAccelRandom: true, waitBeforeNextBounce: false });
+				holeMode = "RANDOM";
+				holeZoomiesMs = 250;
+
+				if(sec != 0 && !firstRun) return;
+				if(firstRun){ clock.newSpeeds(); clock.rollChaseAccel(); clock.rollTrigChase(); }
+				ele.style.animation = 'none';
+			}
+
+			// Frenemies: Wobbleton's roulette, but it's mutual — every hole chases right back
+			// through its own chaseTarget (the clock), each with its own rolled strength and wave.
+			// Bouncing only: force DVD every tick so the 5-minute pattern roll can't Zoomies it.
+			function dvd19(ele){
+				movementType = "DVD";
+				const keep = fx.pullTowardBH || randomItem(BH_MODES);
+				setFX({ ...NO_MOTION, trigChase: true, pullTowardBH: keep, waitBeforeNextBounce: false });
+				holeMode = "DVD";
+				for(const h of holes) h.full = true;
+
+				if(sec != 0 && !firstRun) return;
+				if(firstRun){
+					clock.newSpeeds(); clock.rollChaseAccel(); clock.rollTrigChase();
+					for(const h of holes){ h.newSpeeds(); h.rollChaseAccel(); h.rollTrigChase(); }
 				}
-				else 
+				ele.style.animation = 'none';
+			}
+
+			// Repulsive: Frenemies' roulette, but one-sided — every hole is always drawn to the
+			// clock, the clock always flees all of them. chase() does the sign-flip; this just
+			// turns the roulette on and puts the holes through the chase pipeline like Frenemies.
+			function dvd20(ele){
+				movementType = "DVD";
+				const keep = fx.pullTowardBH || randomItem(BH_MODES);
+				setFX({ ...NO_MOTION, trigChase: true, pullTowardBH: keep, repulsive: true, waitBeforeNextBounce: false });
+				holeMode = "DVD";
+				for(const h of holes) h.full = true;
+
+				if(sec != 0 && !firstRun) return;
+				if(firstRun){
+					clock.newSpeeds(); clock.rollChaseAccel(); clock.rollTrigChase();
+					for(const h of holes){ h.newSpeeds(); h.rollChaseAccel(); h.rollTrigChase(); }
+				}
+				ele.style.animation = 'none';
+			}
+
+			/* ----- background presets ----- */
+
+			function bg1(ele){
+				if(sec != 0 && !firstRun) return;
+				ele.style.animation = min < 45 ? 'none' : 'rotation 5s cubic-bezier(.6, .8, .4, .2) infinite';
+			}
+
+			function bg2(ele){
+				if(sec != 0 && !firstRun) return;
+				if(min >= 50) randABCD();   // dvd2 echoes this curve
+				ele.style.animation = 'inverseannoyingrotation ' + (60-min+5) + 's cubic-bezier(' + fn2Curve() + ') infinite';
+			}
+
+			function bg3(ele){
+				ele.style.animation = 'wiggle 10s ease-in-out infinite alternate';
+			}
+
+			function bg4(ele){
+				if(QUARTER() && gate4) rotVarAnim(ele, 'rot1p', Math.floor(randomBetween(5,15)));
+			}
+
+			function bg6(ele){
+				if(sec != 0 && !firstRun) return;
+
+				bg6synch = coin() ? Math.floor(randomBetween(1,25)) : 0;
+
+				if(bg6synch != 0){
+					if(bg6synch > 16) randABCD();
+					ele.style.animation = rotAnim('inverseannoyingrotation', bg6synch);
+					return;
+				}
+				if(coin()) rotVarAnim(ele, 'rot1p', Math.floor(randomBetween(5,15)));
+				else ele.style.animation = coin() ? 'wiggle 10s ease-in-out infinite alternate' : 'none';
+			}
+
+			function rollDrunkard(){
+				drunkardA = Math.round(Math.random()*1000)/1000;
+				drunkardB = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
+				drunkardC = Math.round(Math.random()*1000)/1000;
+				drunkardD = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
+				// min/15 can round to 4; the original left the previous pick in place there
+				drunkardFunction = DRUNK_ANIMS[Math.round(randomBetween(0, min/15.0))] || drunkardFunction;
+			}
+
+			function bg9(ele){
+				if(!QUARTER()){ drunkardReset = true; return; }
+				if(!drunkardReset) return;
+
+				rollDrunkard();
+				ele.style.animation = 'drunkard ' + ((60-min+5)/drunkardFactor) + 's cubic-bezier('
+					+ [drunkardA, drunkardB, drunkardC, drunkardD].join(',') + ') infinite reverse';
+			}
+
+			function bg11(ele){
+				if(!QUARTER()){ drunkardReset = true; return; }
+				if(!drunkardReset) return;
+
+				rollDrunkard();
+				ele.style.animation = drunkardFunction + (60-min+5) + 's cubic-bezier('
+					+ [drunkardA, drunkardB, drunkardC, drunkardD].join(',') + ') infinite reverse';
+			}
+
+			// Index = preset group - 1. null = this group leaves the element alone.
+			const DVD_ANIM = [dvd6, dvd1, dvd2, dvd3, dvd4, dvd5, dvd7, dvd8, dvd9, dvd10, dvd11, dvd12, dvd13, dvd14, dvd15, dvd16, dvd17, dvd18, dvd19, dvd20];
+			const BG_ANIM  = [bg6,  bg1,  bg2,  bg3,  bg4,  null, bg1,  null, bg9,  null,  bg11, null,  null,  null,  null,  null,  null,  null,  null,  null];
+
+			/* ---------- one runnable check: open with ?test ---------- */
+			function selfTest(){
+				const eq = (a, b, msg) => console.assert(a === b, msg, a, b);
+
+				// Wrap is a global fx flag, same as pullTowardBH: changeFuncGroup(0) at the bottom
+				// of this file may have already rolled it on before selfTest runs. Every bounce
+				// test below assumes classic clamp-and-flip, so pin it off here and only flip it
+				// on inside the dedicated wrap test, which restores it itself.
+				const savedWrapXOuter = fx.wrapX, savedWrapYOuter = fx.wrapY;
+				fx.wrapX = false; fx.wrapY = false;
+
+				eq(bezierFor(1).join(), "0,0,0,0", "bezier corner 1");
+				eq(bezierFor(10).join(), "1,0,0,1", "bezier corner 10");
+				eq(bezierFor(16).join(), "1,1,1,1", "bezier corner 16");
+
+				// A controlled stand-in for whatever the live preset may have spawned, so these
+				// tests don't depend on how many real holes changeFuncGroup(0) happened to roll.
+				const savedHoles = holes;
+				const testHole = new Mover(createHoleElement(), {
+					x: 10000, y: 10000, dirX: -1, dirY: -1,
+					speedfactor: 1.1, speedBoost: 1.0, boostFastest: 1.0, boostSlowest: 1.0,
+					chaseTarget: clock, isHole: true,
+				});
+				holes = [testHole];
+
+				const m = new Mover(document.createElement("div"), {});
+				m.measure();
+				m.x = -50; m.dirX = -1; m.bounceOffWalls();
+				eq(m.x, 0, "clamped to left wall"); eq(m.dirX, 1, "left bounce flips dirX");
+				m.x = screenWidth + 999; m.dirX = 1; m.bounceOffWalls();
+				console.assert(m.x <= screenWidth, "clamped to right wall", m.x);
+				eq(m.dirX, -1, "right bounce flips dirX");
+				console.assert(m.speedX > 0, "bounce assigns a speed", m.speedX);
+
+				// Wrap: no bounce, no direction flip, just fold back once fully past the far edge.
+				// The fold moves it by exactly screenWidth/screenHeight - the same period
+				// placeGhosts() uses - so the handoff between main and ghost is seamless.
+				// w/h set by hand (a bare unmeasured div reads 0 from the DOM).
+				const savedWrapX = fx.wrapX, savedWrapY = fx.wrapY;
+				fx.wrapX = true; fx.wrapY = true;
+				const w1 = new Mover(document.createElement("div"), { dirX: 1, dirY: -1 });
+				w1.w = 100; w1.h = 40;
+				w1.x = screenWidth + 5; w1.y = -w1.h - 5;
+				w1.bounceOffWalls();
+				eq(w1.x, 5, "wrap folds back to the left by exactly one screen width");
+				eq(w1.y, screenHeight - w1.h - 5, "wrap folds back to the top by exactly one screen height");
+				eq(w1.dirX, 1, "wrap never flips dirX"); eq(w1.dirY, -1, "wrap never flips dirY");
+				// Mid-crossing, still on screen at all: no fold yet, and the ghost should be live.
+				w1.x = screenWidth - 5; w1.y = 5;
+				w1.bounceOffWalls();
+				eq(w1.x, screenWidth - 5, "wrap doesn't fold until fully past the edge");
+
+				// A wrap fold is still a "bounce" as far as onBounce() is concerned: color, chase
+				// reroll, stickiness, the hole flinch all still fire. onBounce() itself never
+				// touches dirX/dirY (only the classic-bounce branch does), so this carries no flip.
+				let onBounceCalls = 0;
+				const w2 = new Mover(document.createElement("div"), { dirX: 1, dirY: 1 });
+				w2.w = 50; w2.h = 20;
+				const origOnBounce = w2.onBounce.bind(w2);
+				w2.onBounce = () => { onBounceCalls++; origOnBounce(); };
+				w2.x = screenWidth + 5; w2.y = 5;
+				w2.bounceOffWalls();
+				eq(onBounceCalls, 1, "wrap fires onBounce exactly once per fold");
+				eq(w2.dirX, 1, "...but never flips direction doing it");
+
+				// Stickiness: a full mover with waitBeforeNextBounce parks on a wrap fold same as
+				// a wall bounce, mid-crossing rather than sitting at the edge. Pin pullTowardBH
+				// off first - onBounce() takes the elastic branch instead whenever it's set
+				// (leftover from whatever preset is live), which skips stickiness entirely.
+				const savedWait = fx.waitBeforeNextBounce, savedPullForWrap = fx.pullTowardBH;
+				fx.waitBeforeNextBounce = true;
+				fx.pullTowardBH = "";
+				const w3 = new Mover(document.createElement("div"), { full: true, dirX: 1, dirY: 1 });
+				w3.w = 50; w3.h = 20;
+				w3.x = screenWidth + 5; w3.y = 5;
+				w3.bounceOffWalls();
+				console.assert(w3.countingDown, "wrap sticks a waiting mover same as a bounce would");
+				fx.waitBeforeNextBounce = savedWait;
+
+				// Elastic (chase) mode: the wrap fold still scales speed by a restitution roll,
+				// same magnitude-only change a wall bounce would apply - no sign flip. Thrust,
+				// not gravity: gravity's restitution can exceed 1.0 (mean 1.0 by design), only
+				// thrust/shove guarantee a wall that always sheds speed (BH_THRUST_BOUNCE_MAX).
+				fx.pullTowardBH = "thrust";
+				const w4 = new Mover(document.createElement("div"), { full: true, dirX: 1, dirY: 1, speedX: 10, speedY: 10 });
+				w4.w = 50; w4.h = 20;
+				w4.x = screenWidth + 5; w4.y = 5;
+				w4.bounceOffWalls();
+				console.assert(w4.speedX < 10 && w4.speedX > 0, "wrap runs the elastic restitution roll too", w4.speedX);
+				eq(w4.dirX, 1, "...still no flip");
+				fx.pullTowardBH = savedPullForWrap;
+
+				fx.wrapX = savedWrapX; fx.wrapY = savedWrapY;
+
+				// The black hole runs on its own cycle: moving the hour must not move its phase.
+				const savedMin = min, holeBefore = testHole.phase(), clockBefore = clock.phase();
+				min = (min + 30) % 60;
+				console.assert(Math.abs(testHole.phase() - holeBefore) < 0.01, "black hole phase ignores the clock", holeBefore, testHole.phase());
+				console.assert(clock.phase() !== clockBefore, "clock phase follows the hour");
+				min = savedMin;
+
+				// ...and it actually wobbles, with a shape the hour can't shift.
+				const s = new Mover(document.createElement("div"), { speedfactor: 1.1 });
+				s.newSpeeds();
+				s.sineFrame = 37;        // at frame 0 most wave shapes sit on a zero crossing
+				s.phase = () => 0.5;     // and phase() reads the wall clock, which moves between samples
+				s.x = 100;
+				s.applySineOffset();
+				const dx = s.x - 100;
+				console.assert(dx !== 0, "plain mover gets a sine offset", s.x);
+				s.x = 100; s.sineFrame--;
+				min = (min + 30) % 60; sec = (sec + 17) % 60;
+				s.applySineOffset();
+				console.assert(Math.abs((s.x - 100) - dx) < 1e-9, "sine offset ignores the clock", dx, s.x - 100);
+				min = savedMin;
+
+				// Gravity bites harder up close; thrust doesn't care how far away it is.
+				const target = { x: 500, y: 500, w: 0, h: 0 };
+				const pullAt = (mode, dist) => {
+					const c = new Mover(document.createElement("div"), { full: true, dirX: 1, dirY: 1, speedX: 0, speedY: 0 });
+					c.measure();
+					c.x = 500 - dist - c.w/2; c.y = 500 - c.h/2;
+					fx.pullTowardBH = mode;
+					c.chase(target);
+					return c.dirX * c.speedX;
+				};
+				const savedPull = fx.pullTowardBH;
+
+				// The acceleration ceiling climbs with the minute hand, even at worst-case jitter.
+				// Averages, not extremes: the 0.25x-3x power draw makes single-bounce bands overlap.
+				const mulAt = m => { const s = min; min = m; const c = new Mover(dvd, {}); c.rollChaseAccel(); min = s; return c.chaseMul; };
+				const mean = (m, n = 400) => { let t = 0; for(let i = 0; i < n; i++) t += mulAt(m); return t/n; };
+				const lowMean = mean(5), highMean = mean(55);
+				console.assert(highMean > 3 * lowMean, "chase accel rises with the minute", lowMean, highMean);
+				const highs = [];
+				for(let i = 0; i < 50; i++) highs.push(mulAt(55));
+				console.assert(new Set(highs).size > 1, "chase accel is rerolled, not fixed");
+
+				// A roll taken far from the hole hits harder than one taken next to it.
+				// The screen isn't measured yet at selfTest time, and `far` is normalized by it.
+				const preW = screenWidth, preH = screenHeight;
+				screenWidth = 1920; screenHeight = 1080;
+				const diagonal = Math.hypot(screenWidth, screenHeight);
+				const rollAt = (dist, n = 400) => {
+					const c = new Mover(dvd, { full: true });
+					c.measure();
+					let total = 0;
+					for(let i = 0; i < n; i++){
+						// exact center-to-center separation, whatever the hitboxes measure
+						c.x = testHole.x + testHole.w/2 - c.w/2 - dist;
+						c.y = testHole.y + testHole.h/2 - c.h/2;
+						c.rollChaseAccel();
+						total += c.chaseMul;
+					}
+					return total/n;
+				};
+				const nearRoll = rollAt(20), farRoll = rollAt(diagonal);
+				// Derived from the knobs, so retuning the spread doesn't false-alarm here.
+				const expected = 0.8 * BH_FAR_AWAY / BH_FAR_NEAR;
+				console.assert(farRoll > expected * nearRoll, "a distant roll accelerates harder", nearRoll, farRoll, expected);
+
+				// Frenemies: the hole rolls distance to its own chaseTarget (the clock), not the
+				// nearest spawned hole. Sat right on top of the test hole, which would read as
+				// "near" under the old hardcoded distanceTo(hole) - the bug this guards against.
+				const farTarget = { x: testHole.x + diagonal, y: testHole.y, w: 0, h: 0 };
+				const targetRoll = (n = 400) => {
+					const c = new Mover(document.createElement("div"), { full: true, chaseTarget: farTarget });
+					c.measure();
+					let total = 0;
+					for(let i = 0; i < n; i++){
+						c.x = testHole.x; c.y = testHole.y;   // co-located with the test hole
+						c.rollChaseAccel();
+						total += c.chaseMul;
+					}
+					return total/n;
+				};
+				console.assert(targetRoll() > expected * nearRoll, "rollChaseAccel uses the mover's own chaseTarget", targetRoll(), nearRoll, expected);
+				screenWidth = preW; screenHeight = preH;
+
+				// The governor: a launched clock comes back down, and a drifting one is left alone.
+				// Both directions matter, a flat drag fixed the first and broke the second.
+				const glide = (mode, speed, dist, frames) => {
+					fx.pullTowardBH = mode;
+					const c = new Mover(dvd, { full: true, dirX: 1, dirY: 0, speedX: speed, speedY: 0 });
+					c.measure();
+					c.chaseMul = 1;
+					const far = { x: c.x + dist, y: c.y, w: 0, h: 0 };
+					for(let i = 0; i < frames; i++) c.chase(far);
+					return Math.hypot(c.speedX, c.speedY);
+				};
+				console.assert(glide("gravity", 28, 4000, 200) < BH_CRUISE * 1.5, "a gravity slingshot decays", glide("gravity", 28, 4000, 200));
+				console.assert(glide("gravity", 2, 4000, 200) > 1, "...but a slow drift is not dragged to a halt", glide("gravity", 2, 4000, 200));
+				console.assert(glide("whitehole", 4, 4000, 200) > 1, "the white hole is left ungoverned", glide("whitehole", 4, 4000, 200));
+
+				// The roulette multiplies the pull by up to TRIG_WOBBLE_MAX, which walked straight
+				// through the gravity-only governor and sat on the cap. Every mode is held now.
+				const pinned = mode => {
+					fx.trigChase = true;
+					fx.pullTowardBH = mode;
+					const c = new Mover(dvd, { full: true, x: 300, y: 300, speedX: 2, speedY: 2 });
+					c.measure();
+					c.rollChaseAccel();
+					c.rollTrigChase();   // c isn't a hole, so this only rerolls its own wave shape
+					let atCap = 0;
+					for(let f = 0; f < 3000; f++){
+						c.bounceOffWalls();
+						c.x += c.dirX * c.speedX; c.y += c.dirY * c.speedY;
+						c.chase(testHole);
+						if(Math.hypot(c.speedX, c.speedY) > BH_MAX_SPEED - 0.01) atCap++;
+					}
+					fx.trigChase = false;
+					return atCap / 3000;
+				};
+				// c isn't a hole, so its rollTrigChase rerolls whatever's in `holes` (testHole right
+				// now) as a side effect - which would stomp the fixed mode pinned() is holding steady.
+				const holesDuringPinned = holes;
+				holes = [];
+				for(const mode of BH_MODES)
+					console.assert(pinned(mode) < 0.02, "the roulette does not ride the speed cap: " + mode, pinned(mode));
+				holes = holesDuringPinned;
+
+				console.assert(pullAt("gravity", 100) > pullAt("gravity", 400), "gravity is stronger up close");
+				console.assert(Math.abs(pullAt("thrust", 100) - pullAt("thrust", 400)) < 1e-9, "thrust ignores distance");
+				console.assert(pullAt("thrust", 300) > 0, "pull points at the hole");
+
+				// ...and the push modes are the same curves with the sign flipped.
+				console.assert(Math.abs(pullAt("shove", 300) + pullAt("thrust", 300)) < 1e-9, "shove is thrust, backwards");
+				console.assert(Math.abs(pullAt("whitehole", 100) + pullAt("gravity", 100)) < 1e-9, "white hole is gravity, backwards");
+				console.assert(pullAt("whitehole", 100) < pullAt("whitehole", 400), "the white hole shoves hardest up close");
+
+				// Repulsive: chase() tells a hole and the clock apart by identity (this !== clock),
+				// so this has to run on the real clock singleton, not a throwaway like pullAt's.
 				{
-					drunkardReset = true;
+					const savedRepulsive = fx.repulsive;
+					const saved = m => ({ x: m.x, y: m.y, w: m.w, h: m.h, dirX: m.dirX, dirY: m.dirY, speedX: m.speedX, speedY: m.speedY });
+					const restore = (m, s) => Object.assign(m, s);
+					const clockSave = saved(clock);
+
+					fx.repulsive = true; fx.pullTowardBH = "gravity";
+					Object.assign(testHole, { x: 100, y: 300, w: 0, h: 0, dirX: 1, dirY: 1, speedX: 0, speedY: 0 });
+					Object.assign(clock,    { x: 300, y: 300, w: 0, h: 0, dirX: 1, dirY: 1, speedX: 0, speedY: 0 });
+					testHole.chase(clock);
+					console.assert(testHole.dirX > 0, "repulsive: a hole is drawn toward the clock", testHole.dirX, testHole.speedX);
+
+					Object.assign(testHole, { x: 300, y: 300, w: 0, h: 0, dirX: 1, dirY: 1, speedX: 0, speedY: 0 });
+					Object.assign(clock,    { x: 100, y: 300, w: 0, h: 0, dirX: 1, dirY: 1, speedX: 0, speedY: 0 });
+					clock.chase(testHole);
+					console.assert(clock.dirX < 0, "repulsive: the clock flees a hole", clock.dirX, clock.speedX);
+
+					fx.repulsive = savedRepulsive; fx.pullTowardBH = savedPull;
+					restore(clock, clockSave);
 				}
-			}
 
-			
-			function updateBGAnimationFunction10(ele){
-				
-			}
+				// Chase bounce: flip that axis only, and scale both speeds by one restitution.
+				// selfTest runs before the first frame, so the screen size isn't measured yet.
+				const savedW = screenWidth, savedH = screenHeight;
+				screenWidth = 1920; screenHeight = 1080;
+				fx.pullTowardBH = "thrust";
+				const ratios = [];
+				for(let i = 0; i < 50; i++){
+					const e = new Mover(dvd, { full: true, speedX: 3.5, speedY: 2.25, dirX: -1, dirY: 1 });
+					e.measure();
+					e.x = -10; e.y = 50;
+					e.bounceOffWalls();
+					eq(e.dirX, 1, "chase bounce flips dirX");
+					eq(e.dirY, 1, "chase bounce leaves the other axis alone");
+					console.assert(Math.abs(e.speedX/3.5 - e.speedY/2.25) < 1e-9, "one restitution for both axes", e.speedX, e.speedY);
+					ratios.push(e.speedX / 3.5);
+				}
+				console.assert(Math.min(...ratios) >= BH_THRUST_BOUNCE_MIN && Math.max(...ratios) <= BH_THRUST_BOUNCE_MAX, "restitution stays in range", Math.min(...ratios), Math.max(...ratios));
+				console.assert(new Set(ratios).size > 1, "restitution is rerolled per bounce");
+				// Thrust adds energy every frame, so its wall has to take more back than gravity's.
+				console.assert(Math.max(...ratios) < 1, "a thrust wall always sheds speed", Math.max(...ratios));
 
-			function updateBGAnimationFunction11(ele){
-				// at the top of any minute,
-				if(sec==0 || sec==15 || sec==30 || sec==45 || firstRun){
-					if(drunkardReset)
-					{
-						drunkardA = Math.round(Math.random()*1000)/1000;
-						drunkardB = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
-						drunkardC = Math.round(Math.random()*1000)/1000;
-						drunkardD = Math.round(randomBetween(-1.5,1.5)*1000)/1000;
-						
-						switch(Math.round(randomBetween(0,min/15.0))){
-							case 0:
-								drunkardFunction = "drunkard "
-								break;
-							case 1:
-								drunkardFunction = "wiggle "
-								break;
-							case 2:
-								drunkardFunction = "rotation "
-								break;
-							case 3:
-								drunkardFunction = "annoyingrotation "
-								break;
-						}
-						
-						ele.style.animation = drunkardFunction + ((60-min+5)) + 's cubic-bezier(' + drunkardA + ',' + drunkardB + ',' + drunkardC + ',' + drunkardD + ') infinite reverse';
+				// ...and gravity takes the same lossy wall.
+				fx.pullTowardBH = "gravity";
+				const t = new Mover(dvd, { full: true, speedX: 3.5, speedY: 2.25, dirX: -1, dirY: 1 });
+				t.measure();
+				t.x = -10; t.y = 50;
+				t.bounceOffWalls();
+				eq(t.dirX, 1, "gravity bounce flips dirX");
+				console.assert(t.speedX/3.5 >= BH_BOUNCE_MIN && t.speedX/3.5 <= BH_BOUNCE_MAX, "gravity restitution in range", t.speedX/3.5);
+				fx.pullTowardBH = savedPull;
+				screenWidth = savedW; screenHeight = savedH;
+
+				// The hole picks both acts, and coming back from a teleport leaves no stray % offsets.
+				const savedMode = holeMode, modes = new Set();
+				for(let i = 0; i < 40; i++){ rollHolePattern(); modes.add(holeMode); }
+				eq(modes.size, 2, "the hole rolls both patterns");
+				console.assert(holeJumpEvery >= 2 && holeJumpEvery <= 6, "teleport interval in range", holeJumpEvery);
+				randomlyRepositionElement(testHole.el, 100, 100);
+				do { rollHolePattern(); } while(holeMode != "DVD");
+				eq(testHole.el.style.right, "", "switching back to bouncing clears right");
+				eq(testHole.el.style.bottom, "", "switching back to bouncing clears bottom");
+				console.assert(testHole.x >= 0 && testHole.y >= 0, "hole position synced from the DOM", testHole.x, testHole.y);
+				// In Zoomies a wall bounce makes the hole flinch — and only the clock's wall does,
+				// or the hole would teleport itself off its own bounce and never stop.
+				holeMode = "RANDOM";
+				const zoomW = screenWidth, zoomH = screenHeight;
+				screenWidth = 1920; screenHeight = 1080;
+				const spots = new Set();
+				for(let i = 0; i < 20; i++){
+					const z = new Mover(dvd, { full: true, dirX: -1, dirY: 1 });
+					z.measure();
+					z.x = -10; z.y = 50;
+					z.bounceOffWalls();
+					spots.add(testHole.x + "," + testHole.y);
+				}
+				console.assert(spots.size > 1, "a wall bounce teleports every hole in Zoomies", spots.size);
+				eq(testHole.x, testHole.el.getBoundingClientRect().left, "the mover follows the DOM after the flinch");
+				testHole.x = -10; testHole.y = 50;
+				testHole.bounceOffWalls();
+				eq(testHole.x, 0, "a hole's own wall doesn't teleport it");
+				screenWidth = zoomW; screenHeight = zoomH;
+				holeMode = savedMode;
+
+				// Done with the controlled test hole; hand the array back to whatever the live preset spawned.
+				testHole.el.remove();
+				holes = savedHoles;
+
+				// The roulette: a wall reroll lands on every mode, and the pull rides the wave.
+				fx.trigChase = true;
+				const r = new Mover(dvd, { full: true, isHole: true });
+				const drawn = new Set();
+				for(let i = 0; i < 200; i++){ r.rollTrigChase(); drawn.add(r.pullMode); }
+				eq(drawn.size, BH_MODES.length, "the wall rolls every hole mode");
+
+				fx.pullTowardBH = "thrust";
+				const wob = [];
+				for(let i = 0; i < 200; i++) wob.push(r.trigWobble());
+				console.assert(new Set(wob).size > 1, "the trig pull actually varies");
+				console.assert(Math.max(...wob) <= TRIG_WOBBLE_MAX && Math.min(...wob) >= -TRIG_WOBBLE_MAX, "trig pull stays clamped", Math.min(...wob), Math.max(...wob));
+
+				// Every draw must carry real authority. Two ways this went wrong before: the flat
+				// shapes handed back amplitude zero, and peak-normalizing a spike train buried its
+				// body at ~0.01. Both look identical on screen: nothing happening. So assert on the
+				// typical level of every draw, not on its crest.
+				const levels = [];
+				for(let i = 0; i < 40; i++){
+					r.rollTrigChase();
+					let total = 0;
+					for(let f = 0; f < 1000; f++) total += Math.abs(r.trigWobble());
+					levels.push(total / 1000 / TRIG_WOBBLE_MAX);
+				}
+				console.assert(Math.min(...levels) > 0.1, "every trig draw pulls its weight", Math.min(...levels).toFixed(3));
+
+				// ...and pulls it in one direction. A wave centered on zero measures strong here
+				// while netting nothing: it shakes the clock instead of moving it toward the hole.
+				const nets = [];
+				for(let i = 0; i < 40; i++){
+					r.rollTrigChase();
+					let signed = 0, gross = 0;
+					for(let f = 0; f < 1800; f++){
+						const w = r.trigWobble();
+						signed += w; gross += Math.abs(w);
 					}
+					nets.push(signed / gross);
 				}
-				else 
-				{
-					drunkardReset = true;
+				console.assert(Math.min(...nets) > 0.4, "the trig pull nets out, it doesn't cancel itself", Math.min(...nets).toFixed(2));
+
+				// ...and the same wave moves the clock, not just the gain on the pull. Both axes
+				// have to travel, and not in lockstep: one shared frame makes the drift a diagonal.
+				do { r.rollTrigChase(); } while(r.trigScale == 0);
+				r.x = 0; r.y = 0;
+				let dxTotal = 0, dyTotal = 0, lockstep = 0, worst = 0;
+				for(let f = 0; f < 1000; f++){
+					const px = r.x, py = r.y;
+					r.trigWobble();   // this is what advances the frame
+					r.trigDrift();
+					const dx = r.x - px, dy = r.y - py;
+					dxTotal += Math.abs(dx); dyTotal += Math.abs(dy);
+					worst = Math.max(worst, Math.abs(dx), Math.abs(dy));
+					if(Math.abs(dx - dy) < 1e-9) lockstep++;
 				}
+				console.assert(dxTotal > 100 && dyTotal > 100, "the trig drift actually moves the clock", dxTotal, dyTotal);
+
+				// Wobbleton's gravity is the same curve with the ends pulled in: softer where it
+				// used to yank, present where it used to be nothing. Measured against plain gravity
+				// with the wobble neutralized, so this reads the curve and not the wave.
+				// trigScale 0 collapses the wave to its DC bias, a known constant we divide back
+				// out; chaseMul 0.1 keeps both readings clear of BH_MAX_ACCEL, which would clamp
+				// the near field to the same 8 either way and hide the very thing under test.
+				const curveAt = (on, dist) => {
+					const c = new Mover(document.createElement("div"), { full: true, dirX: 1, dirY: 1, speedX: 0, speedY: 0 });
+					c.measure();
+					c.x = 500 - dist - c.w/2; c.y = 500 - c.h/2;
+					c.trigScale = 0; c.chaseMul = 0.1;
+					fx.trigChase = on; fx.pullTowardBH = "gravity";
+					c.chase(target);
+					return Math.abs(c.dirX * c.speedX) / (on ? TRIG_BIAS * TRIG_WOBBLE_MAX : 1);
+				};
+				console.assert(curveAt(true, 20) < curveAt(false, 20), "Wobbleton eases gravity up close", curveAt(true, 20), curveAt(false, 20));
+				console.assert(curveAt(true, 900) > curveAt(false, 900), "...and gives it reach across the room", curveAt(true, 900), curveAt(false, 900));
+				// "a bit", not "a different force": the near/far ratio has to stay recognisable.
+				console.assert(curveAt(true, 20) > 3 * curveAt(true, 900), "gravity is still gravity", curveAt(true, 20), curveAt(true, 900));
+				console.assert(lockstep < 1000, "X and Y drift are out of phase", lockstep);
+				console.assert(worst <= TRIG_DRIFT + 1e-9, "trig drift stays clamped", worst);
+				fx.trigChase = false;
+				fx.pullTowardBH = savedPull;
+
+				eq(DVD_ANIM.length, PRESETS.length, "a clock animation per preset");
+				eq(BG_ANIM.length, PRESETS.length, "a bg animation slot per preset");
+				fx.wrapX = savedWrapXOuter; fx.wrapY = savedWrapYOuter;
+				console.log("selfTest done");
 			}
 
-			window.onkeyup = keyup;
-			function keyup(event)
-			{   
-				if(event.keyCode == 19)
-				{
-					event.preventDefault();
-					event.stopPropagation();
-					if(!debugmode){
-						bg.style.border = "4px solid #00CCFF";
-						dvd.style.border = "2px solid red";
-						bh.style.border = "2px solid green";
-					} else {
-						bg.style.border = "none";
-						dvd.style.border = "none";
-						bh.style.border = "none";
-					}
-					debugmode = !debugmode;
-				}
-			}
-			
-			changeFuncGroup(10);
+			changeFuncGroup(0);   // random preset
 			// Start the animation's first frame
 			window.requestAnimationFrame(animate);
+			if(location.search.includes("test")) selfTest();
 		</script>
 	</body>
 </html>
